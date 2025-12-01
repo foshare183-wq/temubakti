@@ -3,17 +3,12 @@
 <head>
     <meta charset="utf-8">
     <title>Temu Bakti</title>
-    
     <link rel="manifest" href="manifest.json">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Temu Bakti">
-
     <link rel="apple-touch-icon" href="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/logo%20temu%20bakti.png">
-    <link rel="icon" type="image/png" href="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/logo%20temu%20bakti.png">
 
     <style>
         body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: #ffffff; }
@@ -30,24 +25,29 @@
         window.addEventListener('message', function(e) {
             const data = e.data;
 
-            // 1. Google Script minta tolong SIMPAN ID
+            // 1. Google Script minta SIMPAN ID
             if (data.action === 'saveLogin') {
-                localStorage.setItem('tb_wrapper_id', data.content);
-                console.log("Wrapper: Data disimpan -> " + data.content);
+                if(data.content) {
+                    localStorage.setItem('tb_wrapper_id', data.content);
+                    // DEBUG: Muncul pesan ini jika berhasil simpan
+                    // alert("DEBUG: Data berhasil disimpan di iPhone!"); 
+                }
             }
             
             // 2. Google Script BERTANYA "Ada ID tersimpan gak?"
             if (data.action === 'checkLogin') {
                 const savedData = localStorage.getItem('tb_wrapper_id');
+                
                 if (savedData) {
-                    console.log("Wrapper: Data ditemukan, mengirim balik...");
-                    // Kirim balik ke dalam Iframe
+                    // DEBUG: Muncul pesan ini jika data ditemukan
+                    // alert("DEBUG: Data ditemukan! Mengirim ke aplikasi..."); 
+                    
                     iframe.contentWindow.postMessage({
                         action: 'restoreLogin',
                         content: savedData
                     }, '*');
                 } else {
-                    console.log("Wrapper: Data kosong.");
+                    // alert("DEBUG: Data kosong di iPhone.");
                 }
             }
         });
