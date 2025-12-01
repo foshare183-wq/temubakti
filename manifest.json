@@ -1,8 +1,10 @@
 {
   "name": "Temu Bakti",
   "short_name": "Temu Bakti",
-  "start_url": "./index.html",
+  "start_url": ".",
+  "scope": ".",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
   "icons": [
