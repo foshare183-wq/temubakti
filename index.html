@@ -3,7 +3,9 @@
 <head>
     <meta charset="utf-8">
     <title>Temu Bakti</title>
+    
     <link rel="manifest" href="manifest.json">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -11,73 +13,31 @@
     <meta name="apple-mobile-web-app-title" content="Temu Bakti">
 
     <link rel="apple-touch-icon" href="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/logo%20temu%20bakti.png">
-    
+    <link rel="icon" type="image/png" href="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/logo%20temu%20bakti.png">
+
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: #000; }
-        
-        /* Iframe harus full tapi menyisakan sedikit ruang untuk debug bar di bawah */
-        iframe { border: none; width: 100%; height: 95%; display: block; background: #fff; }
-        
-        /* Debug Bar GitHub (Supaya tau GitHub hidup/mati) */
-        #github-status {
-            height: 5%;
-            background: #222;
-            color: yellow;
-            font-size: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: monospace;
-            text-align: center;
+        /* Reset CSS agar Iframe Full Screen Bersih */
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            height: 100%; 
+            overflow: hidden; 
+            background-color: #ffffff; 
+        }
+        iframe { 
+            border: none; 
+            width: 100%; 
+            height: 100%; 
+            display: block; 
         }
     </style>
 </head>
 <body>
     
     <iframe 
-        id="app-frame" 
-        sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation allow-modals allow-popups-to-escape-sandbox"
-        src="https://script.google.com/macros/s/AKfycbzuoItb2w1IsxORTv2tZoCBQiy9zayZ3JtOjl6PVBIXYohjlP719RxMaavPDWN4lzs8Mw/exec?p=user">
+        src="https://script.google.com/macros/s/AKfycbzuoItb2w1IsxORTv2tZoCBQiy9zayZ3JtOjl6PVBIXYohjlP719RxMaavPDWN4lzs8Mw/exec?p=user"
+        sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation allow-modals allow-popups-to-escape-sandbox">
     </iframe>
 
-    <div id="github-status">Menunggu Pesan...</div>
-
-    <script>
-        const iframe = document.getElementById('app-frame');
-        const statusDiv = document.getElementById('github-status');
-
-        function updateStatus(msg) {
-            statusDiv.innerHTML = "GH: " + msg;
-            console.log("[GitHub] " + msg);
-        }
-
-        window.addEventListener('message', function(e) {
-            const data = e.data;
-
-            // 1. KASUS SIMPAN
-            if (data.action === 'saveLogin') {
-                updateStatus("Menerima SaveLogin: " + data.content);
-                if(data.content) {
-                    localStorage.setItem('tb_wrapper_id', data.content);
-                }
-            }
-            
-            // 2. KASUS CEK (Spamming masuk sini)
-            if (data.action === 'checkLogin') {
-                const savedData = localStorage.getItem('tb_wrapper_id');
-                
-                if (savedData) {
-                    updateStatus("Data Ditemukan! Mengirim Balik...");
-                    // Kirim balik
-                    iframe.contentWindow.postMessage({
-                        action: 'restoreLogin',
-                        content: savedData
-                    }, '*');
-                } else {
-                    updateStatus("Mendengar teriakan, TAPI DATA KOSONG.");
-                }
-            }
-        });
-    </script>
 </body>
 </html>
