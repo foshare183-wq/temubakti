@@ -1,27 +1,22 @@
 {
-  "name": "Portal Temu Bakti PMI",
-  "short_name": "Portal PMI",
-  "start_url": "/index.html",
+  "name": "Temu Bakti",
+  "short_name": "Temu Bakti",
+  "start_url": ".",
+  "scope": ".",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
-  "orientation": "portrait",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/logo%20temu%20bakti.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icon-512.png",
+      "src": "https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/logo%20temu%20bakti.png",
       "sizes": "512x512",
       "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
     }
   ]
 }
