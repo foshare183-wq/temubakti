@@ -19,38 +19,42 @@
     
     <iframe id="app-frame" src="https://script.google.com/macros/s/AKfycbzuoItb2w1IsxORTv2tZoCBQiy9zayZ3JtOjl6PVBIXYohjlP719RxMaavPDWN4lzs8Mw/exec?p=user"></iframe>
 
-    <script>
+     <script>
         const iframe = document.getElementById('app-frame');
+
+        // FUNGSI DEBUG: Tampilkan status di console
+        function debugLog(msg) {
+            console.log("[WRAPPER] " + msg);
+        }
 
         window.addEventListener('message', function(e) {
             const data = e.data;
 
-            // 1. Google Script minta SIMPAN ID
+            // 1. Google Script minta SIMPAN
             if (data.action === 'saveLogin') {
                 if(data.content) {
                     localStorage.setItem('tb_wrapper_id', data.content);
-                    // DEBUG: Muncul pesan ini jika berhasil simpan
-                    //alert("DEBUG: Data berhasil disimpan di iPhone!"); 
+                    debugLog("Simpan Data Sukses: " + data.content);
                 }
             }
             
-            // 2. Google Script BERTANYA "Ada ID tersimpan gak?"
+            // 2. Google Script BERTANYA (Spamming masuk sini)
             if (data.action === 'checkLogin') {
                 const savedData = localStorage.getItem('tb_wrapper_id');
                 
                 if (savedData) {
-                    // DEBUG: Muncul pesan ini jika data ditemukan
-                    // alert("DEBUG: Data ditemukan! Mengirim ke aplikasi..."); 
-                    
+                    debugLog("Ada yang nanya. Mengirim data: " + savedData);
+                    // Kirim balik
                     iframe.contentWindow.postMessage({
                         action: 'restoreLogin',
                         content: savedData
                     }, '*');
                 } else {
-                    // alert("DEBUG: Data kosong di iPhone.");
+                    debugLog("Ada yang nanya. TAPI DATA KOSONG.");
                 }
             }
         });
     </script>
+
 </body>
 </html>
