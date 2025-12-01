@@ -3,12 +3,16 @@
 <head>
     <meta charset="utf-8">
     <title>Temu Bakti</title>
+    
     <link rel="manifest" href="manifest.json">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Temu Bakti">
+
     <link rel="apple-touch-icon" href="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/logo%20temu%20bakti.png">
+    <link rel="icon" type="image/png" href="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/logo%20temu%20bakti.png">
 
     <style>
         body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: #ffffff; }
@@ -19,42 +23,45 @@
     
     <iframe id="app-frame" src="https://script.google.com/macros/s/AKfycbzuoItb2w1IsxORTv2tZoCBQiy9zayZ3JtOjl6PVBIXYohjlP719RxMaavPDWN4lzs8Mw/exec?p=user"></iframe>
 
-     <script>
+    <script>
         const iframe = document.getElementById('app-frame');
 
-        // FUNGSI DEBUG: Tampilkan status di console
-        function debugLog(msg) {
-            console.log("[WRAPPER] " + msg);
+        // Fungsi Helper untuk Debug (Muncul Pop-up di HP)
+        function debugAlert(msg) {
+            // Nyalakan alert ini hanya untuk testing
+            // alert("[GitHub]: " + msg); 
+            console.log("[GitHub]: " + msg);
         }
 
         window.addEventListener('message', function(e) {
             const data = e.data;
 
-            // 1. Google Script minta SIMPAN
+            // 1. KASUS SIMPAN DATA (Saat tombol Login ditekan)
             if (data.action === 'saveLogin') {
                 if(data.content) {
                     localStorage.setItem('tb_wrapper_id', data.content);
-                    debugLog("Simpan Data Sukses: " + data.content);
+                    // debugAlert("Data Berhasil Disimpan: " + data.content);
                 }
             }
             
-            // 2. Google Script BERTANYA (Spamming masuk sini)
+            // 2. KASUS CEK LOGIN (Saat App baru dibuka/Spamming)
             if (data.action === 'checkLogin') {
                 const savedData = localStorage.getItem('tb_wrapper_id');
                 
                 if (savedData) {
-                    debugLog("Ada yang nanya. Mengirim data: " + savedData);
-                    // Kirim balik
+                    // debugAlert("Ada data tersimpan (" + savedData + "). Mengirim balik...");
+                    
+                    // Kirim balik ke Google Script
                     iframe.contentWindow.postMessage({
                         action: 'restoreLogin',
                         content: savedData
                     }, '*');
                 } else {
-                    debugLog("Ada yang nanya. TAPI DATA KOSONG.");
+                    // PENTING: Uncomment baris bawah ini untuk cek apakah GitHub mendengar tapi datanya kosong
+                    // debugAlert("Mendengar teriakan, TAPI DATA KOSONG.");
                 }
             }
         });
     </script>
-
 </body>
 </html>
