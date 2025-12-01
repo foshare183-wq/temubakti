@@ -33,6 +33,33 @@
 </head>
 <body>
     <iframe src="https://script.google.com/macros/s/AKfycbzuoItb2w1IsxORTv2tZoCBQiy9zayZ3JtOjl6PVBIXYohjlP719RxMaavPDWN4lzs8Mw/exec?p=user"></iframe>
-    
+    <script>
+        const iframe = document.getElementById('app-frame');
+
+        // 1. DENGAR PESAN DARI GOOGLE SCRIPT
+        window.addEventListener('message', function(e) {
+            // Pastikan pesan datang dari Google
+            if (e.origin.includes("googleusercontent.com")) {
+                const data = e.data;
+                
+                // Jika Google minta simpan data (Login Berhasil)
+                if (data.action === 'saveLogin') {
+                    localStorage.setItem('user_session', JSON.stringify(data.content));
+                }
+                
+                // Jika Google tanya "Ada data login gak?"
+                if (data.action === 'checkLogin') {
+                    const savedSession = localStorage.getItem('user_session');
+                    if (savedSession) {
+                        // Kirim balik data ke Google Script
+                        iframe.contentWindow.postMessage({
+                            action: 'restoreLogin',
+                            content: JSON.parse(savedSession)
+                        }, '*');
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>
