@@ -6,12 +6,10 @@
 
   <link rel="manifest" href="manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Temu Bakti">
   <link rel="apple-touch-icon" href="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/logo%20temu%20bakti.png">
-  
   <link rel="icon" type="image/png" href="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/logo%20temu%20bakti.png">
   <meta name="theme-color" content="#ffffff">
   
@@ -25,13 +23,12 @@
 
   <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] } } } }</script>
   <style>
-    /* Style Loader & Animasi Tetap Sama */
     .loader { border: 3px solid rgba(220, 38, 38, 0.3); border-top: 3px solid #DC2626; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .bg-pattern { background-color: #f8fafc; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px; }
     .no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .nav-item.active { color: #DC2626; } .nav-item.active i { transform: translateY(-2px); }
-    #splash-screen { transition: opacity 0.5s ease-out; }
+    #splash-screen { transition: opacity 0.3s ease-out; }
     .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   </style>
@@ -41,7 +38,8 @@
   <div id="splash-screen" class="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center text-slate-800 px-10">
       <img src="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/tulisan.png" class="h-16 w-auto mb-8 animate-bounce object-contain">
       <div class="loader !w-8 !h-8"></div>
-      <p class="mt-4 text-xs font-bold tracking-widest text-slate-400 opacity-80">MENGHUBUNGKAN...</p>
+      <p class="mt-4 text-xs font-bold tracking-widest text-slate-400 opacity-80">MEMUAT...</p>
+      <p id="error-debug" class="mt-2 text-[10px] text-red-500 font-mono hidden">...</p>
   </div>
 
   <div id="modalInfo" class="fixed inset-0 z-[90] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-6 hidden animate-fade-in">
@@ -88,7 +86,10 @@
               <img src="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/sign/TB%20PMI/logo%20temu%20bakti.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zNWE1YTU1OC05MDZjLTRkOGItYmRlYy00MjQwYWIwZmJjZjciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJUQiBQTUkvbG9nbyB0ZW11IGJha3RpLnBuZyIsImlhdCI6MTc2NDQwOTM1OCwiZXhwIjoxNzk1OTQ1MzU4fQ.rFOKnTOGuwrKY0wVD4xtvDonxDhHCrlWOgpM6Z7AJRs" class="h-8 w-auto">
               <span class="font-bold text-slate-800 text-sm">Temu Bakti</span>
           </div>
-          <button onclick="doLogout()" class="text-slate-400 hover:text-red-500 transition"><i class="bi bi-box-arrow-right text-xl"></i></button>
+          <div class="flex items-center gap-3">
+             <div id="syncIndicator" class="hidden text-[10px] text-slate-400 animate-pulse font-bold">MENGUPDATE...</div>
+             <button onclick="doLogout()" class="text-slate-400 hover:text-red-500 transition"><i class="bi bi-box-arrow-right text-xl"></i></button>
+          </div>
       </div>
 
       <div class="flex-1 overflow-y-auto no-scrollbar pb-24" id="mainContent">
@@ -140,20 +141,26 @@
 
   <script>
     // =========================================================================
-    // KONFIGURASI UTAMA
+    // ERROR HANDLER
     // =========================================================================
+    window.onerror = function(msg, url, line) {
+       const errBox = document.getElementById('error-debug');
+       if(errBox) {
+         errBox.innerText = "Error: " + msg + " (Line " + line + ")";
+         errBox.classList.remove('hidden');
+         setTimeout(() => { document.getElementById('splash-screen').classList.add('hidden'); }, 3000);
+       }
+    };
+
+    // =========================================================================
+    // KONFIGURASI 
+    // =========================================================================
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwXyXvR_mB24fJk_EXAMPLE/exec"; // <-- PASTIKAN INI URL YANG BENAR
     
-    // 1. PASTE URL DEPLOYMENT GOOGLE APPS SCRIPT (/exec) ANDA DI SINI
-    // Pastikan tidak ada spasi
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzuoItb2w1IsxORTv2tZoCBQiy9zayZ3JtOjl6PVBIXYohjlP719RxMaavPDWN4lzs8Mw/exec";
-    
-    // 2. CONFIG PIAGAM
     const CERT_CONFIG = {
         TEMPLATE_URL: 'https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/piagam%20Temu%20Bakti.jpg', 
         NAME_Y: 145, UNIT_Y: 153, NAME_SIZE: 24, NAME_COLOR: '#000000', UNIT_SIZE: 14, UNIT_COLOR: '#555555'
     };
-
-    // 3. KONEKSI SUPABASE
     const SB_URL = 'https://afbhvfhdjozvypeehgjo.supabase.co'; 
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmYmh2Zmhkam96dnlwZWVoZ2pvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMDY1MjksImV4cCI6MjA3ODc4MjUyOX0.D6JtTY6TWWyZcLEulj1GUl1xL9zWyPNRAFiisYxhKWc'; 
 
@@ -161,7 +168,7 @@
     let sb = null;
 
     // =========================================================================
-    // CORE FUNCTION (PENGGANTI GOOGLE.SCRIPT.RUN)
+    // CORE FUNCTION
     // =========================================================================
     async function callApi(action, payload = {}) {
         const bodyData = { action: action, ...payload };
@@ -169,30 +176,69 @@
             method: 'POST',
             body: JSON.stringify(bodyData),
             redirect: "follow",   
-            headers: { "Content-Type": "text/plain;charset=utf-8" } // Anti-CORS trick
+            headers: { "Content-Type": "text/plain;charset=utf-8" }
         };
-
         const response = await fetch(GAS_API_URL, requestOptions);
-        if (!response.ok) throw new Error("Gagal terhubung ke server (Error " + response.status + ")");
+        if (!response.ok) throw new Error("Server Error");
         return await response.json();
     }
 
     // =========================================================================
-    // LOGIC APLIKASI
+    // LOGIC UTAMA (DENGAN CACHE SYSTEM)
     // =========================================================================
 
     window.onload = function() {
-        // Coba inisialisasi Realtime
-        startRealtimeListener();
+        // 1. Safety Timer (Jaga-jaga macet)
+        setTimeout(() => {
+             const splash = document.getElementById('splash-screen');
+             if(splash && !splash.classList.contains('hidden')) {
+                 if(!document.getElementById('view-main').classList.contains('flex') && document.getElementById('view-login').classList.contains('hidden')) {
+                     hideSplash();
+                     document.getElementById('view-login').classList.remove('hidden');
+                 }
+             }
+        }, 5000);
 
-        // Cek Local Storage
-        const savedId = localStorage.getItem('tb_user_id');
+        try {
+            // 2. Start Realtime
+            setTimeout(startRealtimeListener, 1000); 
 
-        if (savedId) {
-            console.log("Auto Login: " + savedId);
-            document.getElementById('loginId').value = savedId;
-            doLogin(true);
-        } else {
+            // 3. CEK LOGIN
+            const savedId = localStorage.getItem('tb_user_id');
+            const cachedData = localStorage.getItem('tb_cache_data'); // Ambil Data Offline
+
+            if (savedId) {
+                CURRENT_ID = savedId;
+                document.getElementById('loginId').value = savedId;
+
+                if (cachedData) {
+                    // === JALUR CEPAT (CACHE) ===
+                    console.log("Menggunakan Cache Data");
+                    const parsed = JSON.parse(cachedData);
+                    
+                    // Render UI Langsung (User senang karena cepat)
+                    renderCard(parsed.data, parsed.history);
+                    renderRundownData(parsed.rundown); 
+                    checkConfig(parsed.config);
+                    
+                    hideSplash(); // Tutup loading segera!
+                    
+                    document.getElementById('view-login').classList.add('hidden');
+                    document.getElementById('view-main').classList.remove('hidden');
+                    document.getElementById('view-main').classList.add('flex');
+
+                    // Update di background (diam-diam)
+                    doLogin(true, true); 
+                } else {
+                    // === JALUR BIASA (Belum ada cache) ===
+                    doLogin(true, false);
+                }
+            } else {
+                hideSplash();
+                document.getElementById('view-login').classList.remove('hidden');
+            }
+        } catch (e) {
+            console.error("Init Error:", e);
             hideSplash();
             document.getElementById('view-login').classList.remove('hidden');
         }
@@ -200,106 +246,106 @@
 
     function startRealtimeListener() {
         try {
-            // Cek apakah library supabase sudah terload
-            if(typeof supabase === 'undefined') {
-                console.warn("Library Supabase belum dimuat. Fitur Realtime dimatikan sementara.");
-                return;
-            }
-
-            // Inisialisasi Supabase
-            sb = supabase.createClient(SB_URL, SB_KEY);
-            console.log("Supabase Realtime Started");
-            
+            if(typeof supabase === 'undefined' || !supabase) return;
+            if(!sb) sb = supabase.createClient(SB_URL, SB_KEY);
             sb.channel('public:app_settings')
               .on('postgres_changes', 
                   { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, 
-                  (payload) => {
-                      console.log("Update dari Admin:", payload.new);
-                      checkConfig(payload.new);
-                      if(CURRENT_ID) {
-                           // Opsional: Kasih notif kecil kalau ada data baru
-                      }
-                  }
+                  (payload) => { checkConfig(payload.new); }
               )
               .subscribe();
-
-        } catch (e) {
-            console.error("Gagal memulai Realtime:", e);
-            // Aplikasi tetap jalan walaupun realtime error
-        }
+        } catch (e) { console.error("Realtime err:", e); }
     }
 
     function hideSplash() { 
         const splash = document.getElementById('splash-screen'); 
         if(splash) {
             splash.style.opacity = '0'; 
-            setTimeout(() => splash.classList.add('hidden'), 500); 
+            setTimeout(() => splash.classList.add('hidden'), 300); 
         }
     }
 
-    async function doLogin(isAuto = false) {
+    // UPDATE: Tambah parameter 'isSilent'
+    async function doLogin(isAuto = false, isSilent = false) {
         const idInput = document.getElementById('loginId');
         const id = idInput.value.trim().toUpperCase();
         const btn = document.getElementById('btnLogin');
         const msgBox = document.getElementById('loginMsg');
+        const syncInd = document.getElementById('syncIndicator');
 
-        if(!id) { msgBox.innerHTML = 'Mohon isi ID Peserta.'; msgBox.classList.remove('hidden'); return; }
+        if(!id) { if(!isSilent) { msgBox.innerHTML = 'Mohon isi ID Peserta.'; msgBox.classList.remove('hidden'); } return; }
 
-        if(!isAuto) { 
-            btn.disabled = true; 
-            btn.innerHTML = '<div class="loader !w-5 !h-5 !border-white !border-t-transparent mx-auto"></div>'; 
-            msgBox.classList.add('hidden'); 
+        // UI State
+        if(!isSilent) {
+            if(!isAuto) { 
+                btn.disabled = true; 
+                btn.innerHTML = '<div class="loader !w-5 !h-5 !border-white !border-t-transparent mx-auto"></div>'; 
+                msgBox.classList.add('hidden'); 
+            }
+        } else {
+            // Kalau silent mode (background update), nyalakan indikator kecil
+            if(syncInd) syncInd.classList.remove('hidden');
         }
 
         try {
             const res = await callApi('login', { id: id });
 
             if(res.success) {
+                // SIMPAN DATA KE CACHE AGAR BESOK BUKA CEPAT
                 localStorage.setItem('tb_user_id', id);
+                localStorage.setItem('tb_cache_data', JSON.stringify({
+                    data: res.data,
+                    history: res.history,
+                    rundown: res.rundown,
+                    config: res.config
+                }));
+                
                 CURRENT_ID = id;
 
-                hideSplash();
-                document.getElementById('view-login').classList.add('hidden');
-                document.getElementById('view-main').classList.remove('hidden');
-                document.getElementById('view-main').classList.add('flex');
-                
+                // Render UI (Update tampilan dengan data terbaru)
                 renderCard(res.data, res.history);
                 renderRundownData(res.rundown); 
                 checkConfig(res.config);
 
+                if(!isSilent) {
+                    hideSplash();
+                    document.getElementById('view-login').classList.add('hidden');
+                    document.getElementById('view-main').classList.remove('hidden');
+                    document.getElementById('view-main').classList.add('flex');
+                }
+
             } else {
-                throw new Error(res.message);
+                if(isSilent) console.warn("Background update failed: " + res.message);
+                else throw new Error(res.message);
             }
 
         } catch (error) {
             console.error(error);
-            if(isAuto) { 
-                hideSplash();
-                document.getElementById('view-login').classList.remove('hidden'); 
-                localStorage.removeItem('tb_user_id'); 
+            if(!isSilent) {
+                if(isAuto) { 
+                    hideSplash();
+                    document.getElementById('view-login').classList.remove('hidden'); 
+                    // Jangan hapus ID, mungkin cuma masalah koneksi
+                } else {
+                    msgBox.innerHTML = error.message || "Gagal terhubung.";
+                    msgBox.classList.remove('hidden');
+                    resetBtn();
+                }
             }
-            msgBox.innerHTML = error.message || "Terjadi kesalahan koneksi.";
-            msgBox.classList.remove('hidden');
-            resetBtn();
+        } finally {
+            if(syncInd) syncInd.classList.add('hidden'); // Matikan indikator sync
         }
     }
 
     async function refreshData() {
         if(!CURRENT_ID) return;
         const btnIcon = document.querySelector('#btnRefresh i');
-        btnIcon.classList.add('animate-spin'); 
-
-        try {
-            const res = await callApi('refresh', { id: CURRENT_ID });
-            if(res.success) {
-                renderCard(res.data, res.history);
-                checkConfig(res.config);
-            }
-        } catch(e) { console.error("Refresh gagal", e); } 
-        finally { setTimeout(() => btnIcon.classList.remove('animate-spin'), 500); }
+        if(btnIcon) btnIcon.classList.add('animate-spin'); 
+        doLogin(true, true).then(() => {
+             if(btnIcon) setTimeout(() => btnIcon.classList.remove('animate-spin'), 500);
+        });
     }
 
-    // --- PDF GENERATOR ---
     async function generatePDF() {
         const btn = document.getElementById('btnDownloadPDF'); 
         const oriText = btn.innerHTML;
@@ -321,6 +367,7 @@
 
     function doLogout() { 
         localStorage.removeItem('tb_user_id'); 
+        localStorage.removeItem('tb_cache_data'); // Hapus Cache juga
         CURRENT_ID = ''; 
         document.getElementById('loginId').value = ''; 
         document.getElementById('loginMsg').classList.add('hidden'); 
@@ -330,7 +377,7 @@
         document.getElementById('view-login').classList.remove('hidden'); 
     }
 
-    // --- FUNGSI RENDER & UTILS ---
+    // --- UTILS ---
     function resetBtn() { const btn = document.getElementById('btnLogin'); if(btn) { btn.disabled = false; btn.innerText = "MASUK"; } }
     function resetButton(btn, text) { btn.innerHTML = text; btn.disabled = false; }
     
@@ -449,5 +496,3 @@
   </script>
 </body>
 </html>
-
-
