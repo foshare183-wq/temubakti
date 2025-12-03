@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#ffffff">
+  <title>Kartu Peserta - Temu Bakti</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] } } } }</script>
+  <style>
+    .loader { border: 3px solid rgba(220, 38, 38, 0.3); border-top: 3px solid #DC2626; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .bg-pattern { background-color: #f8fafc; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px; }
+    .no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .nav-item.active { color: #DC2626; } .nav-item.active i { transform: translateY(-2px); }
+    #splash-screen { transition: opacity 0.5s ease-out; }
+    .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body class="bg-pattern text-slate-800 font-sans min-h-screen flex flex-col items-center justify-center p-0">
+
+  <div id="splash-screen" class="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center text-slate-800 px-10">
+      <img src="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/tulisan.png" class="h-16 w-auto mb-8 animate-bounce object-contain">
+      <div class="loader !w-8 !h-8"></div>
+      <p class="mt-4 text-xs font-bold tracking-widest text-slate-400 opacity-80">MENGHUBUNGKAN...</p>
+  </div>
+
+  <div id="modalInfo" class="fixed inset-0 z-[90] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-6 hidden animate-fade-in">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center relative overflow-hidden">
+          <div class="absolute top-0 left-0 w-full h-2 bg-blue-500"></div>
+          <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600"><i class="bi bi-info-circle-fill text-3xl"></i></div>
+          <h3 class="text-xl font-bold text-slate-800 mb-2" id="infoTitle">Info Terkini</h3>
+          <div class="max-h-60 overflow-y-auto mb-6 text-sm text-slate-600 leading-relaxed text-left bg-slate-50 p-3 rounded-xl border border-slate-100" id="infoMsg">...</div>
+          <button onclick="closeInfo()" class="w-full py-3 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:opacity-90">SAYA MENGERTI</button>
+      </div>
+  </div>
+
+  <div id="view-login" class="w-full max-w-md bg-white min-h-screen flex flex-col sm:rounded-3xl sm:h-[800px] sm:shadow-2xl sm:min-h-0 overflow-hidden hidden">
+      <div class="bg-white p-8 pb-0 text-center relative overflow-hidden flex-none">
+          <div class="relative z-10 flex flex-col items-center">
+              <div class="mb-4 mt-6"><img src="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/logo%20temu%20bakti.png" class="h-32 w-auto object-contain"></div>
+              <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">PORTAL PESERTA</h1>
+              <p class="text-red-600 text-sm font-bold tracking-widest uppercase">Temu Bakti PMI Malut</p>
+          </div>
+      </div>
+      <div class="p-8 flex-1 flex flex-col justify-center bg-white relative z-20">
+          <div class="space-y-6">
+              <div>
+                  <label class="block text-xs font-bold text-slate-400 uppercase mb-2 tracking-wider ml-1">ID Peserta</label>
+                  <div class="relative">
+                      <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <i class="bi bi-person-badge text-slate-400 text-xl"></i>
+                      </div>
+                      <input type="text" id="loginId" class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-lg font-mono font-bold rounded-2xl focus:ring-red-500 focus:border-red-500 block w-full pl-12 p-4 outline-none transition uppercase placeholder-slate-300" placeholder="CONTOH: TBKTXA...">
+                  </div>
+                  <p class="text-[10px] text-slate-400 mt-2 italic text-center">*Hanya peserta yang sudah Registrasi Ulang yang bisa masuk.</p>
+              </div>
+              
+              <button onclick="doLogin(false)" id="btnLogin" class="w-full text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-bold rounded-2xl text-lg px-5 py-4 text-center shadow-lg shadow-red-200 transform active:scale-95 transition-all mt-2">LOGIN</button>
+              <div id="loginMsg" class="hidden p-4 mb-4 text-sm text-red-800 rounded-2xl bg-red-50 text-center border border-red-100"></div>
+          </div>
+          <p class="text-center text-slate-300 text-xs mt-auto pt-8">Powered by Panitia Temu Bakti</p>
+      </div>
+  </div>
+
+  <div id="view-main" class="w-full max-w-md h-screen bg-slate-50 hidden flex-col relative overflow-hidden sm:border sm:border-slate-200 sm:rounded-3xl sm:h-[800px] sm:shadow-2xl">
+      <div class="bg-white px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-30 flex-none">
+          <div class="flex items-center gap-2">
+              <img src="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/sign/TB%20PMI/logo%20temu%20bakti.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zNWE1YTU1OC05MDZjLTRkOGItYmRlYy00MjQwYWIwZmJjZjciLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJUQiBQTUkvbG9nbyB0ZW11IGJha3RpLnBuZyIsImlhdCI6MTc2NDQwOTM1OCwiZXhwIjoxNzk1OTQ1MzU4fQ.rFOKnTOGuwrKY0wVD4xtvDonxDhHCrlWOgpM6Z7AJRs" class="h-8 w-auto">
+              <span class="font-bold text-slate-800 text-sm">Temu Bakti</span>
+          </div>
+          <button onclick="doLogout()" class="text-slate-400 hover:text-red-500 transition"><i class="bi bi-box-arrow-right text-xl"></i></button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto no-scrollbar pb-24" id="mainContent">
+          <div id="tab-home" class="block animate-fade-in">
+              <div class="p-6 pb-2">
+                  <div id="idCardVisual"></div>
+                  
+                  <div id="btnCertContainer" class="mt-4 hidden animate-fade-in">
+                      <button onclick="generatePDF()" id="btnDownloadPDF" class="w-full bg-amber-400 hover:bg-amber-500 text-amber-900 font-bold py-4 rounded-2xl shadow-lg shadow-amber-100 flex items-center justify-center gap-3 transition transform active:scale-95 border-2 border-amber-300">
+                          <i class="bi bi-file-earmark-pdf-fill text-2xl"></i>
+                          <span>DOWNLOAD PIAGAM</span>
+                      </button>
+                  </div>
+              </div>
+
+              <div class="px-6 py-2">
+                  <div class="grid grid-cols-2 gap-3">
+                      <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
+                          <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600"><i class="bi bi-calendar-check-fill"></i></div>
+                          <div><div class="text-xl font-bold text-slate-800" id="statTotal">0</div><div class="text-[10px] text-slate-400 font-bold uppercase">Terdaftar</div></div>
+                      </div>
+                      <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
+                          <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600"><i class="bi bi-trophy-fill"></i></div>
+                          <div><div class="text-xl font-bold text-slate-800" id="statDone">0</div><div class="text-[10px] text-slate-400 font-bold uppercase">Selesai</div></div>
+                      </div>
+                  </div>
+              </div>
+
+              <div class="p-6">
+                  <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="bi bi-activity text-red-500"></i> Kegiatan Saya</h3>
+                  <p class="text-[10px] text-slate-400 mb-2 italic">*Tekan tombol refresh di bawah untuk update data terbaru.</p>
+                  <div id="activityList" class="space-y-0 relative border-l-2 border-slate-100 ml-3 pl-6 pb-4"></div>
+                  <div id="emptyState" class="hidden flex flex-col items-center justify-center py-10 text-center"><div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3 text-slate-300"><i class="bi bi-clipboard-x text-3xl"></i></div><p class="text-slate-400 text-sm">Belum ada kegiatan diikuti.</p></div>
+              </div>
+          </div>
+
+          <div id="tab-jadwal" class="hidden animate-fade-in p-6">
+              <h3 class="font-bold text-slate-800 mb-4 text-lg">Jadwal Kegiatan</h3>
+              <div id="rundownList" class="space-y-3"><div class="text-center py-10"><div class="loader !border-slate-300 !border-t-red-500 mx-auto"></div></div></div>
+          </div>
+      </div>
+
+      <div class="bg-white border-t border-slate-200 px-6 py-3 flex justify-around items-center sticky bottom-0 z-40 pb-5 sm:pb-3">
+          <button onclick="switchTab('home')" id="nav-home" class="nav-item active flex flex-col items-center gap-1 text-slate-400 transition"><i class="bi bi-person-vcard text-xl transition-transform"></i><span class="text-[10px] font-bold">Kartu Saya</span></button>
+          <button onclick="refreshData()" id="btnRefresh" class="w-12 h-12 bg-slate-900 text-white rounded-full shadow-lg -mt-8 border-4 border-slate-50 flex items-center justify-center active:scale-90 transition hover:bg-black"><i class="bi bi-arrow-clockwise text-xl"></i></button>
+          <button onclick="switchTab('jadwal')" id="nav-jadwal" class="nav-item flex flex-col items-center gap-1 text-slate-400 transition"><i class="bi bi-calendar-week text-xl transition-transform"></i><span class="text-[10px] font-bold">Jadwal</span></button>
+      </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // KONFIGURASI UTAMA
+    // =========================================================================
+    
+    // 1. GANTI INI DENGAN URL DEPLOYMENT WEB APP BARU ANDA
+    const GAS_API_URL = "https://script.google.com/macros/s/GANTI_DENGAN_ID_DEPLOYMENT_ANDA/exec";
+    
+    // 2. CONFIG PIAGAM
+    const CERT_CONFIG = {
+        TEMPLATE_URL: 'https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/piagam%20Temu%20Bakti.jpg', 
+        NAME_Y: 145, UNIT_Y: 153, NAME_SIZE: 24, NAME_COLOR: '#000000', UNIT_SIZE: 14, UNIT_COLOR: '#555555'
+    };
+
+    let CURRENT_ID = '';
+
+    // =========================================================================
+    // CORE FUNCTION (PENGGANTI GOOGLE.SCRIPT.RUN)
+    // =========================================================================
+    async function callApi(action, payload = {}) {
+        const bodyData = { action: action, ...payload };
+        
+        // Gunakan POST request (fetch)
+        const response = await fetch(GAS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify(bodyData)
+            // Note: Google Apps Script redirect (302) ditangani otomatis oleh browser
+        });
+
+        if (!response.ok) throw new Error("Gagal terhubung ke server");
+        return await response.json();
+    }
+
+    // =========================================================================
+    // LOGIC APLIKASI
+    // =========================================================================
+
+    window.onload = function() {
+        // Cek Local Storage (GitHub Pages aman untuk Safari!)
+        const savedId = localStorage.getItem('tb_user_id');
+
+        if (savedId) {
+            console.log("Auto Login: " + savedId);
+            document.getElementById('loginId').value = savedId;
+            doLogin(true);
+        } else {
+            hideSplash();
+            document.getElementById('view-login').classList.remove('hidden');
+        }
+    };
+
+    function hideSplash() { 
+        const splash = document.getElementById('splash-screen'); 
+        if(splash) {
+            splash.style.opacity = '0'; 
+            setTimeout(() => splash.classList.add('hidden'), 500); 
+        }
+    }
+
+    async function doLogin(isAuto = false) {
+        const idInput = document.getElementById('loginId');
+        const id = idInput.value.trim().toUpperCase();
+        const btn = document.getElementById('btnLogin');
+        const msgBox = document.getElementById('loginMsg');
+
+        if(!id) { 
+            msgBox.innerHTML = 'Mohon isi ID Peserta.'; 
+            msgBox.classList.remove('hidden'); 
+            return; 
+        }
+
+        if(!isAuto) { 
+            btn.disabled = true; 
+            btn.innerHTML = '<div class="loader !w-5 !h-5 !border-white !border-t-transparent mx-auto"></div>'; 
+            msgBox.classList.add('hidden'); 
+        }
+
+        try {
+            // PANGGIL API GAS
+            const res = await callApi('login', { id: id });
+
+            if(res.success) {
+                // Simpan ID agar tahan refresh/close browser
+                localStorage.setItem('tb_user_id', id);
+                CURRENT_ID = id;
+
+                hideSplash();
+                document.getElementById('view-login').classList.add('hidden');
+                document.getElementById('view-main').classList.remove('hidden');
+                document.getElementById('view-main').classList.add('flex');
+                
+                // Render Data
+                renderCard(res.data, res.history);
+                renderRundownData(res.rundown); 
+                checkConfig(res.config);
+
+            } else {
+                throw new Error(res.message);
+            }
+
+        } catch (error) {
+            console.error(error);
+            if(isAuto) { 
+                hideSplash();
+                document.getElementById('view-login').classList.remove('hidden'); 
+                localStorage.removeItem('tb_user_id'); // Clear invalid session
+            }
+            msgBox.innerHTML = error.message || "Terjadi kesalahan koneksi.";
+            msgBox.classList.remove('hidden');
+            resetBtn();
+        }
+    }
+
+    async function refreshData() {
+        if(!CURRENT_ID) return;
+        
+        const btnIcon = document.querySelector('#btnRefresh i');
+        btnIcon.classList.add('animate-spin'); // Efek putar
+
+        try {
+            const res = await callApi('refresh', { id: CURRENT_ID });
+            if(res.success) {
+                renderCard(res.data, res.history);
+                checkConfig(res.config);
+            }
+        } catch(e) {
+            console.error("Refresh gagal", e);
+        } finally {
+            setTimeout(() => btnIcon.classList.remove('animate-spin'), 500);
+        }
+    }
+
+    // --- PDF GENERATOR (UPDATED FOR FETCH) ---
+    async function generatePDF() {
+        const btn = document.getElementById('btnDownloadPDF'); 
+        const oriText = btn.innerHTML;
+        
+        if (!CERT_CONFIG.TEMPLATE_URL) { alert("Error: URL Template belum diatur."); return; }
+        
+        btn.innerHTML = '<div class="loader !w-5 !h-5 !border-amber-900 !border-t-transparent mx-auto"></div> Tunggu...'; 
+        btn.disabled = true;
+
+        try {
+            // Request Gambar Base64 dari Server
+            const res = await callApi('getCertImage', { url: CERT_CONFIG.TEMPLATE_URL });
+            
+            if(res.success && res.data) {
+                createPDF(res.data, btn, oriText);
+            } else {
+                throw new Error("Gagal mengambil gambar.");
+            }
+
+        } catch (e) {
+            console.error(e);
+            alert("Gagal koneksi ke server.");
+            resetButton(btn, oriText);
+        }
+    }
+
+    function doLogout() { 
+        localStorage.removeItem('tb_user_id'); 
+        CURRENT_ID = ''; 
+        document.getElementById('loginId').value = ''; 
+        document.getElementById('loginMsg').classList.add('hidden'); 
+        resetBtn(); 
+        
+        document.getElementById('view-main').classList.add('hidden'); 
+        document.getElementById('view-main').classList.remove('flex'); 
+        document.getElementById('view-login').classList.remove('hidden'); 
+    }
+
+    // --- FUNGSI RENDER & UTILS (SAMA SEPERTI SEBELUMNYA) ---
+    function resetBtn() { const btn = document.getElementById('btnLogin'); if(btn) { btn.disabled = false; btn.innerText = "MASUK"; } }
+    function resetButton(btn, text) { btn.innerHTML = text; btn.disabled = false; }
+    
+    function renderCard(p, history) {
+        try {
+            const safeNama = p.nama_peserta || 'Peserta'; const safeUnit = p.nama_unit || '-'; const safeId = p.id_peserta || '???'; const safeUnsur = (p.unsur || 'Umum');
+            const cardVisual = document.getElementById('idCardVisual');
+            const URL_BG = "https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/id%20card.jpg";
+            
+            cardVisual.className = "w-full rounded-2xl shadow-xl relative overflow-hidden aspect-[1.58/1] bg-slate-200";
+            cardVisual.style.backgroundImage = `url('${URL_BG}')`;
+            cardVisual.style.backgroundSize = "cover";
+            cardVisual.style.backgroundPosition = "center";
+
+            cardVisual.innerHTML = `
+                <div class="absolute inset-0 z-10 p-5 flex flex-col justify-center items-end text-right pl-[140px]">
+                    <h2 id="cardName" class="text-lg sm:text-xl font-extrabold leading-tight uppercase drop-shadow-sm mb-0.5 w-full truncate text-slate-900">${safeNama}</h2>
+                    <p id="cardUnit" class="text-[10px] font-bold text-slate-800 opacity-90 mb-3 border-b-2 border-slate-300 pb-1 inline-block tracking-wide">${safeUnit}</p>
+                    <div class="bg-white p-1.5 rounded-lg shadow-md mb-2 border border-slate-200"><div id="qrcode" class="opacity-100"></div></div>
+                    <div class="flex items-center gap-1 mt-1">
+                        <span class="text-[10px] font-mono font-bold text-slate-700 bg-white/90 px-2 py-0.5 rounded border border-slate-300">${safeId}</span>
+                        <span class="text-[10px] font-bold text-white bg-red-600 px-2 py-0.5 rounded shadow-sm border border-red-500 uppercase">${safeUnsur}</span>
+                    </div>
+                </div>`;
+
+            setTimeout(() => { const qrEl = document.getElementById("qrcode"); if(qrEl) { qrEl.innerHTML = ""; try { new QRCode(qrEl, { text: safeId, width: 65, height: 65, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.M }); } catch(e) { console.log("QR Error"); } } }, 150);
+
+            const list = document.getElementById('activityList');
+            if(list) {
+                list.innerHTML = ''; let countDone = 0;
+                if(!history || history.length === 0) { document.getElementById('emptyState').classList.remove('hidden'); } else { document.getElementById('emptyState').classList.add('hidden');
+                    history.forEach((h, index) => {
+                        let cardClass = "bg-white border-slate-100"; let dotColor = "bg-slate-300"; let statusLabel = "Terdaftar"; let badgeClass = "bg-slate-100 text-slate-500 border-slate-200"; let timeLabel = "Belum mulai"; let icon = "bi-hourglass"; let medalEffect = "";
+                        if(h.status === 'Hadir') { cardClass = "bg-blue-50 border-blue-200"; dotColor = "bg-blue-500 ring-4 ring-blue-100"; statusLabel = "Sedang Ikut"; badgeClass = "bg-blue-100 text-blue-700 border-blue-200"; timeLabel = h.waktu_hadir ? formatTime(h.waktu_hadir) : '-'; icon = "bi-geo-alt-fill"; }
+                        if(h.status === 'Selesai') { 
+                            cardClass = "bg-gradient-to-br from-white to-emerald-50 border-emerald-300 shadow-md transform scale-[1.02]"; dotColor = "bg-emerald-500 ring-4 ring-emerald-100"; statusLabel = ""; badgeClass = "hidden"; timeLabel = h.waktu_selesai ? formatTime(h.waktu_selesai) : '-'; icon = "bi-check-circle-fill"; countDone++;
+                            const urlMedali = "https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/medali%20temu%20bakti.png";
+                            medalEffect = `<div class="absolute -right-4 -bottom-6 opacity-10 pointer-events-none"><i class="bi bi-patch-check-fill text-9xl text-emerald-600 transform -rotate-12"></i></div><div class="absolute -right-3 -top-1 z-20"><img src="${urlMedali}" class="w-24 h-24 object-contain drop-shadow-xl hover:scale-110 transition-transform" alt="Medali"></div>`;
+                        }
+                        list.innerHTML += `<div class="relative pb-8"><div class="absolute -left-[31px] top-6 w-4 h-4 rounded-full ${dotColor} transition-all duration-500 z-10"></div><div class="relative p-4 rounded-2xl border ${cardClass} shadow-sm flex flex-col gap-3 transition-all duration-300 overflow-hidden min-h-[100px] justify-between">${medalEffect}<div class="relative z-10 pr-12"><h4 class="font-bold text-slate-800 text-sm leading-snug">${h.nama_kegiatan}</h4></div><div class="flex justify-between items-center relative z-10"><div class="flex items-center gap-2 text-xs text-slate-500"><i class="bi ${icon} ${h.status==='Selesai' ? 'text-emerald-600':''}"></i> <span class="font-mono">${timeLabel}</span></div><span class="px-3 py-1 rounded-lg text-[10px] font-bold border ${badgeClass} uppercase tracking-wider">${statusLabel}</span></div></div></div>`;
+                    });
+                }
+                document.getElementById('statTotal').innerText = history ? history.length : 0;
+                document.getElementById('statDone').innerText = countDone;
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    function createPDF(imgData, btn, oriText) {
+        try {
+            const { jsPDF } = window.jspdf;
+            const elName = document.getElementById('cardName');
+            const elUnit = document.getElementById('cardUnit');
+            const txtName = elName ? elName.innerText.toUpperCase() : "PESERTA";
+            const txtUnit = elUnit ? elUnit.innerText : "-";
+
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+            const width = doc.internal.pageSize.getWidth(); const height = doc.internal.pageSize.getHeight();
+            
+            doc.addImage(imgData, 'JPEG', 0, 0, width, height, undefined, 'FAST');
+            doc.setFont("helvetica", "bold"); doc.setFontSize(CERT_CONFIG.NAME_SIZE); doc.setTextColor(CERT_CONFIG.NAME_COLOR);
+            doc.text(txtName, width / 2, CERT_CONFIG.NAME_Y, { align: "center" });
+            doc.setFont("helvetica", "normal"); doc.setFontSize(CERT_CONFIG.UNIT_SIZE); doc.setTextColor(CERT_CONFIG.UNIT_COLOR);
+            doc.text(txtUnit, width / 2, CERT_CONFIG.UNIT_Y, { align: "center" });
+
+            doc.save(`Piagam_${txtName}.pdf`);
+            btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> BERHASIL!'; setTimeout(() => { resetButton(btn, oriText); }, 3000);
+        } catch (error) { console.error(error); alert("Gagal menyusun PDF."); resetButton(btn, oriText); }
+    }
+
+    function linkify(inputText) { if (!inputText) return ""; let replacePattern = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim; let replacedText = inputText.replace(replacePattern, '<a href="$1" target="_blank" class="text-blue-600 font-bold underline hover:text-blue-800 break-all">$1</a>'); return replacedText.replace(/\n/g, '<br>'); }
+    
+    function checkConfig(conf) { 
+        if(!conf) return; 
+        if(conf.cert_active) { document.getElementById('btnCertContainer').classList.remove('hidden'); } else { document.getElementById('btnCertContainer').classList.add('hidden'); } 
+        if(conf.info_active) { 
+            const lastVersion = localStorage.getItem('tb_info_ver'); 
+            if(lastVersion != conf.info_version) { 
+                document.getElementById('infoTitle').innerText = conf.info_title || "Info Terkini"; 
+                document.getElementById('infoMsg').innerHTML = linkify(conf.info_message || ""); 
+                document.getElementById('modalInfo').classList.remove('hidden'); 
+                localStorage.setItem('tb_info_ver', conf.info_version); 
+            } 
+        } 
+    }
+    
+    function closeInfo() { document.getElementById('modalInfo').classList.add('hidden'); }
+
+    function renderRundownData(data) { 
+        const c = document.getElementById('rundownList'); c.innerHTML = ''; 
+        if(!data || data.length === 0) { c.innerHTML = '<p class="text-center text-slate-400 text-sm">Belum ada jadwal.</p>'; return; } 
+        const groups = {}; 
+        data.forEach(j => { const k = j.hari_tanggal || "Lainnya"; if(!groups[k]) groups[k] = []; groups[k].push(j); }); 
+        Object.keys(groups).forEach(date => { 
+            let itemsHtml = ''; 
+            groups[date].forEach(j => { 
+                let badgeColor = 'bg-slate-100 text-slate-500'; 
+                if(j.unsur.includes('Wira')) badgeColor = 'bg-orange-100 text-orange-700'; 
+                else if(j.unsur.includes('Madya')) badgeColor = 'bg-purple-100 text-purple-700'; 
+                else if(j.unsur.includes('Pembina')) badgeColor = 'bg-blue-100 text-blue-700'; 
+                itemsHtml += `<div class="bg-white p-3 rounded-xl border border-slate-100 mb-2 flex gap-3 items-start"><div class="text-center min-w-[50px]"><div class="text-sm font-bold text-slate-800">${j.waktu}</div></div><div class="flex-1 border-l border-slate-100 pl-3"><h4 class="font-bold text-sm text-slate-800 leading-tight">${j.kegiatan}</h4><div class="flex gap-2 mt-2"><span class="text-[10px] px-2 py-0.5 rounded font-bold ${badgeColor}">${j.unsur}</span><span class="text-[10px] px-2 py-0.5 rounded bg-slate-50 text-slate-500 border border-slate-200"><i class="bi bi-geo-alt-fill"></i> ${j.lokasi}</span></div></div></div>`; 
+            }); 
+            c.innerHTML += `<div class="mb-4"><h4 class="font-bold text-red-600 mb-2 text-sm uppercase tracking-wider">${date}</h4>${itemsHtml}</div>`; 
+        }); 
+    }
+
+    function switchTab(tab) { 
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active')); 
+        document.getElementById('nav-'+tab).classList.add('active'); 
+        ['home', 'jadwal'].forEach(t => document.getElementById('tab-'+t).classList.add('hidden')); 
+        document.getElementById('tab-'+tab).classList.remove('hidden'); 
+    }
+
+    function formatTime(iso) { return new Date(iso).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) + ' WIT'; }
+
+  </script>
+</body>
+</html>
