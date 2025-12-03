@@ -142,6 +142,31 @@
 
     let CURRENT_ID = '';
 
+    // =========================================================================
+    // 3. KONEKSI SUPABASE (UNTUK REALTIME)
+    // =========================================================================
+    const SB_URL = 'https://afbhvfhdjozvypeehgjo.supabase.co'; 
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmYmh2Zmhkam96dnlwZWVoZ2pvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMDY1MjksImV4cCI6MjA3ODc4MjUyOX0.D6JtTY6TWWyZcLEulj1GUl1xL9zWyPNRAFiisYxhKWc'; 
+    
+    // Pastikan library Supabase sudah dimuat di <head> (sudah ada di kode Anda)
+    const sb = supabase.createClient(SB_URL, SB_KEY);
+
+    // Fungsi untuk mendengarkan perubahan tanpa refresh
+    function startRealtimeListener() {
+        console.log("Menghubungkan Realtime...");
+        
+        sb.channel('public:app_settings')
+          .on('postgres_changes', 
+              { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, 
+              (payload) => {
+                  console.log("Ada update dari admin!", payload.new);
+                  // Langsung update tampilan tanpa panggil GAS (Cepat!)
+                  checkConfig(payload.new);
+              }
+          )
+          .subscribe();
+    }
+
    function callApi
     // =========================================================================
     // LOGIC APLIKASI
@@ -150,7 +175,7 @@
     window.onload = function() {
         // Cek Local Storage (GitHub Pages aman untuk Safari!)
         const savedId = localStorage.getItem('tb_user_id');
-
+        startRealtimeListener();
         if (savedId) {
             console.log("Auto Login: " + savedId);
             document.getElementById('loginId').value = savedId;
@@ -401,4 +426,5 @@
 </body>
 
 </html>
+
 
