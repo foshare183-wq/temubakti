@@ -9,8 +9,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] } } } }</script>
   <style>
@@ -131,8 +133,9 @@
     // KONFIGURASI UTAMA
     // =========================================================================
     
-    // 1. GANTI INI DENGAN URL DEPLOYMENT WEB APP BARU ANDA
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzuoItb2w1IsxORTv2tZoCBQiy9zayZ3JtOjl6PVBIXYohjlP719RxMaavPDWN4lzs8Mw/exec";
+    // 1. PASTE URL DEPLOYMENT GOOGLE APPS SCRIPT (/exec) ANDA DI SINI
+    // Pastikan tidak ada spasi
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwXyXvR_mB24fJk_EXAMPLE/exec";
     
     // 2. CONFIG PIAGAM
     const CERT_CONFIG = {
@@ -140,42 +143,41 @@
         NAME_Y: 145, UNIT_Y: 153, NAME_SIZE: 24, NAME_COLOR: '#000000', UNIT_SIZE: 14, UNIT_COLOR: '#555555'
     };
 
-    let CURRENT_ID = '';
-
-    // =========================================================================
-    // 3. KONEKSI SUPABASE (UNTUK REALTIME)
-    // =========================================================================
+    // 3. KONEKSI SUPABASE
     const SB_URL = 'https://afbhvfhdjozvypeehgjo.supabase.co'; 
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmYmh2Zmhkam96dnlwZWVoZ2pvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMDY1MjksImV4cCI6MjA3ODc4MjUyOX0.D6JtTY6TWWyZcLEulj1GUl1xL9zWyPNRAFiisYxhKWc'; 
-    
-    // Pastikan library Supabase sudah dimuat di <head> (sudah ada di kode Anda)
-    const sb = supabase.createClient(SB_URL, SB_KEY);
 
-    // Fungsi untuk mendengarkan perubahan tanpa refresh
-    function startRealtimeListener() {
-        console.log("Menghubungkan Realtime...");
-        
-        sb.channel('public:app_settings')
-          .on('postgres_changes', 
-              { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, 
-              (payload) => {
-                  console.log("Ada update dari admin!", payload.new);
-                  // Langsung update tampilan tanpa panggil GAS (Cepat!)
-                  checkConfig(payload.new);
-              }
-          )
-          .subscribe();
+    let CURRENT_ID = '';
+    let sb = null;
+
+    // =========================================================================
+    // CORE FUNCTION (PENGGANTI GOOGLE.SCRIPT.RUN)
+    // =========================================================================
+    async function callApi(action, payload = {}) {
+        const bodyData = { action: action, ...payload };
+        const requestOptions = {
+            method: 'POST',
+            body: JSON.stringify(bodyData),
+            redirect: "follow",   
+            headers: { "Content-Type": "text/plain;charset=utf-8" } // Anti-CORS trick
+        };
+
+        const response = await fetch(GAS_API_URL, requestOptions);
+        if (!response.ok) throw new Error("Gagal terhubung ke server (Error " + response.status + ")");
+        return await response.json();
     }
 
-   function callApi
     // =========================================================================
     // LOGIC APLIKASI
     // =========================================================================
 
     window.onload = function() {
-        // Cek Local Storage (GitHub Pages aman untuk Safari!)
-        const savedId = localStorage.getItem('tb_user_id');
+        // Coba inisialisasi Realtime
         startRealtimeListener();
+
+        // Cek Local Storage
+        const savedId = localStorage.getItem('tb_user_id');
+
         if (savedId) {
             console.log("Auto Login: " + savedId);
             document.getElementById('loginId').value = savedId;
@@ -185,6 +187,37 @@
             document.getElementById('view-login').classList.remove('hidden');
         }
     };
+
+    function startRealtimeListener() {
+        try {
+            // Cek apakah library supabase sudah terload
+            if(typeof supabase === 'undefined') {
+                console.warn("Library Supabase belum dimuat. Fitur Realtime dimatikan sementara.");
+                return;
+            }
+
+            // Inisialisasi Supabase
+            sb = supabase.createClient(SB_URL, SB_KEY);
+            console.log("Supabase Realtime Started");
+            
+            sb.channel('public:app_settings')
+              .on('postgres_changes', 
+                  { event: 'UPDATE', schema: 'public', table: 'app_settings', filter: 'id=eq.1' }, 
+                  (payload) => {
+                      console.log("Update dari Admin:", payload.new);
+                      checkConfig(payload.new);
+                      if(CURRENT_ID) {
+                           // Opsional: Kasih notif kecil kalau ada data baru
+                      }
+                  }
+              )
+              .subscribe();
+
+        } catch (e) {
+            console.error("Gagal memulai Realtime:", e);
+            // Aplikasi tetap jalan walaupun realtime error
+        }
+    }
 
     function hideSplash() { 
         const splash = document.getElementById('splash-screen'); 
@@ -200,11 +233,7 @@
         const btn = document.getElementById('btnLogin');
         const msgBox = document.getElementById('loginMsg');
 
-        if(!id) { 
-            msgBox.innerHTML = 'Mohon isi ID Peserta.'; 
-            msgBox.classList.remove('hidden'); 
-            return; 
-        }
+        if(!id) { msgBox.innerHTML = 'Mohon isi ID Peserta.'; msgBox.classList.remove('hidden'); return; }
 
         if(!isAuto) { 
             btn.disabled = true; 
@@ -213,11 +242,9 @@
         }
 
         try {
-            // PANGGIL API GAS
             const res = await callApi('login', { id: id });
 
             if(res.success) {
-                // Simpan ID agar tahan refresh/close browser
                 localStorage.setItem('tb_user_id', id);
                 CURRENT_ID = id;
 
@@ -226,7 +253,6 @@
                 document.getElementById('view-main').classList.remove('hidden');
                 document.getElementById('view-main').classList.add('flex');
                 
-                // Render Data
                 renderCard(res.data, res.history);
                 renderRundownData(res.rundown); 
                 checkConfig(res.config);
@@ -240,7 +266,7 @@
             if(isAuto) { 
                 hideSplash();
                 document.getElementById('view-login').classList.remove('hidden'); 
-                localStorage.removeItem('tb_user_id'); // Clear invalid session
+                localStorage.removeItem('tb_user_id'); 
             }
             msgBox.innerHTML = error.message || "Terjadi kesalahan koneksi.";
             msgBox.classList.remove('hidden');
@@ -250,9 +276,8 @@
 
     async function refreshData() {
         if(!CURRENT_ID) return;
-        
         const btnIcon = document.querySelector('#btnRefresh i');
-        btnIcon.classList.add('animate-spin'); // Efek putar
+        btnIcon.classList.add('animate-spin'); 
 
         try {
             const res = await callApi('refresh', { id: CURRENT_ID });
@@ -260,33 +285,23 @@
                 renderCard(res.data, res.history);
                 checkConfig(res.config);
             }
-        } catch(e) {
-            console.error("Refresh gagal", e);
-        } finally {
-            setTimeout(() => btnIcon.classList.remove('animate-spin'), 500);
-        }
+        } catch(e) { console.error("Refresh gagal", e); } 
+        finally { setTimeout(() => btnIcon.classList.remove('animate-spin'), 500); }
     }
 
-    // --- PDF GENERATOR (UPDATED FOR FETCH) ---
+    // --- PDF GENERATOR ---
     async function generatePDF() {
         const btn = document.getElementById('btnDownloadPDF'); 
         const oriText = btn.innerHTML;
-        
         if (!CERT_CONFIG.TEMPLATE_URL) { alert("Error: URL Template belum diatur."); return; }
         
         btn.innerHTML = '<div class="loader !w-5 !h-5 !border-amber-900 !border-t-transparent mx-auto"></div> Tunggu...'; 
         btn.disabled = true;
 
         try {
-            // Request Gambar Base64 dari Server
             const res = await callApi('getCertImage', { url: CERT_CONFIG.TEMPLATE_URL });
-            
-            if(res.success && res.data) {
-                createPDF(res.data, btn, oriText);
-            } else {
-                throw new Error("Gagal mengambil gambar.");
-            }
-
+            if(res.success && res.data) { createPDF(res.data, btn, oriText); } 
+            else { throw new Error("Gagal mengambil gambar."); }
         } catch (e) {
             console.error(e);
             alert("Gagal koneksi ke server.");
@@ -300,13 +315,12 @@
         document.getElementById('loginId').value = ''; 
         document.getElementById('loginMsg').classList.add('hidden'); 
         resetBtn(); 
-        
         document.getElementById('view-main').classList.add('hidden'); 
         document.getElementById('view-main').classList.remove('flex'); 
         document.getElementById('view-login').classList.remove('hidden'); 
     }
 
-    // --- FUNGSI RENDER & UTILS (SAMA SEPERTI SEBELUMNYA) ---
+    // --- FUNGSI RENDER & UTILS ---
     function resetBtn() { const btn = document.getElementById('btnLogin'); if(btn) { btn.disabled = false; btn.innerText = "MASUK"; } }
     function resetButton(btn, text) { btn.innerHTML = text; btn.disabled = false; }
     
@@ -424,7 +438,4 @@
 
   </script>
 </body>
-
 </html>
-
-
