@@ -142,23 +142,7 @@
 
     let CURRENT_ID = '';
 
-    // =========================================================================
-    // CORE FUNCTION (PENGGANTI GOOGLE.SCRIPT.RUN)
-    // =========================================================================
-    async function callApi(action, payload = {}) {
-        const bodyData = { action: action, ...payload };
-        
-        // Gunakan POST request (fetch)
-        const response = await fetch(GAS_API_URL, {
-            method: 'POST',
-            body: JSON.stringify(bodyData)
-            // Note: Google Apps Script redirect (302) ditangani otomatis oleh browser
-        });
-
-        if (!response.ok) throw new Error("Gagal terhubung ke server");
-        return await response.json();
-    }
-
+   function callApi
     // =========================================================================
     // LOGIC APLIKASI
     // =========================================================================
@@ -417,3 +401,4 @@
 </body>
 
 </html>
+
