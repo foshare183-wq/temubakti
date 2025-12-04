@@ -211,16 +211,34 @@
     };
 
     // --- SCANNER LOGIC ---
+    // --- SCANNER LOGIC (FIX FOR IPHONE) ---
     function startScan() {
         document.getElementById('scannerModal').classList.remove('hidden');
         
-        // Config Scanner
         html5QrcodeScanner = new Html5Qrcode("reader");
-        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
         
-        // Start Camera (Back Camera preferred)
-        html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
+        // Konfigurasi khusus agar lancar di iPhone
+        const config = { 
+            fps: 10, // Jangan terlalu tinggi (boros baterai & panas di iPhone)
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0,
+            experimentalFeatures: {
+                useBarCodeDetectorIfSupported: true
+            }
+        };
+        
+        // Coba nyalakan kamera belakang
+        html5QrcodeScanner.start(
+            { facingMode: "environment" }, // Paksa kamera belakang
+            config, 
+            onScanSuccess,
+            (errorMessage) => {
+                // Error saat scanning frame-by-frame biarkan saja (jangan alert)
+                // console.log(errorMessage); 
+            }
+        )
         .catch(err => {
+            // Error fatal (misal: izin ditolak)
             alert("Gagal membuka kamera: " + err);
             stopScan();
         });
