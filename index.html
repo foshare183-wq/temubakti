@@ -212,38 +212,59 @@
 
     // --- SCANNER LOGIC ---
     // --- SCANNER LOGIC (FIX FOR IPHONE) ---
+    // --- SCANNER LOGIC (IPHONE BARCODE FIX) ---
     function startScan() {
         document.getElementById('scannerModal').classList.remove('hidden');
         
+        // Hapus instance lama jika ada (mencegah crash)
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.clear();
+        }
+
         html5QrcodeScanner = new Html5Qrcode("reader");
         
-        // Konfigurasi khusus agar lancar di iPhone
+        // 1. CONFIG LEBIH AGRESIF
         const config = { 
-            fps: 10, // Jangan terlalu tinggi (boros baterai & panas di iPhone)
-            qrbox: { width: 250, height: 250 },
+            fps: 10, 
+            // Buat area scan lebih lebar untuk barcode
+            qrbox: { width: 300, height: 200 }, 
             aspectRatio: 1.0,
+            // PENTING: Matikan experimental feature di iPhone agar lebih stabil
             experimentalFeatures: {
-                useBarCodeDetectorIfSupported: true
+                useBarCodeDetectorIfSupported: false
             }
         };
         
-        // Coba nyalakan kamera belakang
+        // 2. TENTUKAN FORMAT (Agar iPhone tau harus cari garis-garis)
+        // Kita aktifkan SEMUA jenis kode umum
+        const configVerbose = { 
+            formatsToSupport: [ 
+                Html5QrcodeSupportedFormats.QR_CODE,
+                Html5QrcodeSupportedFormats.CODE_128, // Barcode umum ID Card
+                Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.EAN_13
+            ]
+        };
+
+        // 3. SETTING KAMERA KHUSUS IPHONE
+        const cameraConfig = { 
+            facingMode: "environment",
+            focusMode: "continuous" // Mencoba memaksa fokus (jika didukung)
+        };
+        
         html5QrcodeScanner.start(
-            { facingMode: "environment" }, // Paksa kamera belakang
-            config, 
+            cameraConfig, 
+            { ...config, ...configVerbose }, 
             onScanSuccess,
             (errorMessage) => {
-                // Error saat scanning frame-by-frame biarkan saja (jangan alert)
-                // console.log(errorMessage); 
+                // Biarkan kosong agar tidak spam console
             }
         )
         .catch(err => {
-            // Error fatal (misal: izin ditolak)
-            alert("Gagal membuka kamera: " + err);
+            alert("Gagal akses kamera: " + err);
             stopScan();
         });
     }
-
     function onScanSuccess(decodedText, decodedResult) {
         // Stop scanning
         stopScan();
