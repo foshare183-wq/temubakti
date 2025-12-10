@@ -193,7 +193,7 @@
   <script>
     // ⚠️ GANTI INI DENGAN URL DEPLOYMENT ANDA (/exec) ⚠️
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzuoItb2w1IsxORTv2tZoCBQiy9zayZ3JtOjl6PVBIXYohjlP719RxMaavPDWN4lzs8Mw/exec"; 
-    
+    const GAS_NEWS_URL = "https://script.google.com/macros/s/AKfycbx693z5rUDTuE8_GrkvSeXOwt60OzIBSgQ64aMr20V00iUQz_wylG8JfMWprcfV3xOHjw/exec";
     // Config Lain
     const CERT_CONFIG = { TEMPLATE_URL: 'https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/piagam%20Temu%20Bakti.jpg', NAME_Y: 145, UNIT_Y: 153, NAME_SIZE: 24, NAME_COLOR: '#000000', UNIT_SIZE: 14, UNIT_COLOR: '#555555' };
     const SB_URL = 'https://afbhvfhdjozvypeehgjo.supabase.co'; 
@@ -317,7 +317,16 @@
         container.innerHTML = '<div class="text-center py-10 col-span-2 w-full"><div class="loader !border-slate-300 !border-t-blue-500 mx-auto"></div></div>';
 
         try {
-            const res = await callApi('get_mading_public');
+            // KITA PAKAI FETCH MANUAL KE URL NEWSROOM (SCRIPT B)
+            const response = await fetch(GAS_NEWS_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'get_mading_public' }),
+                // header 'no-cors' kadang diperlukan jika beda domain, 
+                // tapi coba polosan dulu karena return JSON
+            });
+            
+            const res = await response.json();
+
             if(res.success) {
                 MADING_CACHE = res.data;
                 renderMading(res.data);
@@ -325,6 +334,7 @@
                 container.innerHTML = '<p class="text-center text-slate-400 text-xs col-span-2">Gagal memuat mading.</p>';
             }
         } catch (e) {
+            console.error(e); // Cek console kalau error
             container.innerHTML = '<p class="text-center text-slate-400 text-xs col-span-2">Koneksi error.</p>';
         }
     }
