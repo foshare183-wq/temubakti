@@ -8,6 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/logo%20temu%20bakti.png">
+  <link rel="icon" type="image/png" href="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/logo%20temu%20bakti.png">
   <meta name="theme-color" content="#ffffff">
   
   <script src="https://cdn.tailwindcss.com"></script>
@@ -393,7 +395,8 @@
             html += `
             <div onclick="openBerita(${item.id})" class="flex gap-4 items-start bg-white p-3 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition active:scale-[0.98] cursor-pointer">
                 <div class="w-24 h-24 shrink-0 rounded-xl overflow-hidden bg-slate-200 relative">
-                    <img src="${item.foto_url}" class="w-full h-full object-cover" loading="lazy">
+                    // Tambahkan parameter =s200 di ujung URL agar Google Drive mengirim versi kecil (200px)
+<img src="${item.foto_url}=s200" class="w-full h-full object-cover" loading="lazy">
                 </div>
                 <div class="flex-1 min-w-0 py-1">
                     <div class="flex items-center gap-2 mb-1">
