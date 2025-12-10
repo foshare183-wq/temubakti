@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Redaksi PMR Newsroom</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  
+  <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] } } } }</script>
+  <style>
+    body { background-color: #f8fafc; }
+    .glass-nav { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-bottom: 1px solid #e2e8f0; }
+    .loader { border: 3px solid #cbd5e1; border-top: 3px solid #3b82f6; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .status-badge { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  </style>
+</head>
+<body class="text-slate-800 font-sans min-h-screen">
+
+  <div id="loginOverlay" class="fixed inset-0 z-[100] bg-slate-900 flex flex-col items-center justify-center p-6">
+      <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center">
+          <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600"><i class="bi bi-shield-lock-fill text-3xl"></i></div>
+          <h2 class="text-xl font-bold mb-1">Ruang Redaksi</h2>
+          <p class="text-slate-400 text-xs mb-6">Area terbatas khusus Panitia.</p>
+          <input type="password" id="pinInput" class="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-center text-lg font-bold mb-4 outline-none focus:ring-2 focus:ring-red-500" placeholder="Masukkan PIN" maxlength="6">
+          <button onclick="checkPin()" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-black transition">BUKA PINTU</button>
+      </div>
+  </div>
+
+  <div id="mainDashboard" class="hidden">
+      
+      <nav class="fixed top-0 inset-x-0 z-40 glass-nav px-4 py-3 flex justify-between items-center shadow-sm">
+          <div class="flex items-center gap-2">
+              <div class="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold"><i class="bi bi-newspaper"></i></div>
+              <span class="font-bold text-sm">Editor Panel</span>
+          </div>
+          <button onclick="refreshData()" class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 hover:bg-blue-100 hover:text-blue-600 transition"><i class="bi bi-arrow-clockwise" id="btnRefreshIcon"></i></button>
+      </nav>
+
+      <div class="pt-20 px-4 pb-4">
+          <div class="flex p-1 bg-slate-200 rounded-xl mb-6">
+              <button onclick="switchTab('DRAFT')" id="tab-DRAFT" class="flex-1 py-2 rounded-lg text-xs font-bold transition bg-white text-slate-800 shadow-sm">PENDING</button>
+              <button onclick="switchTab('PUBLISHED')" id="tab-PUBLISHED" class="flex-1 py-2 rounded-lg text-xs font-bold transition text-slate-500 hover:text-slate-800">TAYANG</button>
+              <button onclick="switchTab('REJECTED')" id="tab-REJECTED" class="flex-1 py-2 rounded-lg text-xs font-bold transition text-slate-500 hover:text-slate-800">TOLAK</button>
+          </div>
+
+          <div id="newsList" class="space-y-4 pb-20">
+              <div class="text-center py-10"><div class="loader mx-auto"></div></div>
+          </div>
+      </div>
+  </div>
+
+  <div id="modalEdit" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+          <h3 class="font-bold text-lg mb-4">Edit Berita</h3>
+          <input type="hidden" id="editId">
+          <div class="space-y-3">
+              <div>
+                  <label class="text-xs font-bold text-slate-400">Judul</label>
+                  <input type="text" id="editJudul" class="w-full border border-slate-300 rounded-lg p-2 text-sm font-bold">
+              </div>
+              <div>
+                  <label class="text-xs font-bold text-slate-400">Kategori</label>
+                  <select id="editKategori" class="w-full border border-slate-300 rounded-lg p-2 text-sm">
+                      <option value="Berita">Berita</option><option value="Opini">Opini</option><option value="Profil">Profil</option><option value="Sastra">Sastra</option>
+                  </select>
+              </div>
+              <div>
+                  <label class="text-xs font-bold text-slate-400">Isi Konten</label>
+                  <textarea id="editIsi" rows="5" class="w-full border border-slate-300 rounded-lg p-2 text-sm resize-none"></textarea>
+              </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3 mt-6">
+              <button onclick="closeEdit()" class="py-2 bg-slate-100 text-slate-600 font-bold rounded-lg text-sm">BATAL</button>
+              <button onclick="saveEdit()" class="py-2 bg-blue-600 text-white font-bold rounded-lg text-sm">SIMPAN PERUBAHAN</button>
+          </div>
+      </div>
+  </div>
+
+  <script>
+    // ⚠️ CONFIG ⚠️
+    const GAS_URL = "URL_WEB_APP_GAS_ANDA_DI_SINI"; // PASTE URL SAMA PERSIS DENGAN REPORTER
+    const SECRET_PIN = "2026"; // PIN ADMIN (Bisa diganti)
+
+    let ALL_DATA = [];
+    let CURRENT_TAB = 'DRAFT';
+
+    // 1. PIN PROTECTION
+    function checkPin() {
+        const input = document.getElementById('pinInput').value;
+        if(input === SECRET_PIN) {
+            document.getElementById('loginOverlay').classList.add('hidden');
+            document.getElementById('mainDashboard').classList.remove('hidden');
+            loadData(); // Load data pertama kali
+        } else {
+            alert("PIN Salah! Coba lagi.");
+            document.getElementById('pinInput').value = '';
+        }
+    }
+
+    // 2. LOAD DATA
+    async function loadData() {
+        const container = document.getElementById('newsList');
+        const icon = document.getElementById('btnRefreshIcon');
+        
+        container.innerHTML = '<div class="text-center py-10"><div class="loader mx-auto"></div><p class="text-xs text-slate-400 mt-2">Mengambil data...</p></div>';
+        icon.classList.add('animate-spin');
+
+        try {
+            const res = await fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'get_berita_admin' })
+            });
+            const json = await res.json();
+            
+            if(json.success) {
+                ALL_DATA = json.data;
+                renderList();
+            } else {
+                container.innerHTML = `<p class="text-center text-red-500 text-sm">${json.message}</p>`;
+            }
+        } catch (e) {
+            container.innerHTML = `<p class="text-center text-red-500 text-sm">Gagal koneksi server.</p>`;
+        } finally {
+            icon.classList.remove('animate-spin');
+        }
+    }
+
+    function refreshData() { loadData(); }
+
+    // 3. RENDER UI
+    function switchTab(status) {
+        CURRENT_TAB = status;
+        // Update Style Tombol Tab
+        ['DRAFT', 'PUBLISHED', 'REJECTED'].forEach(s => {
+            const btn = document.getElementById('tab-'+s);
+            if(s === status) {
+                btn.className = "flex-1 py-2 rounded-lg text-xs font-bold transition bg-white text-slate-800 shadow-sm ring-1 ring-slate-200";
+            } else {
+                btn.className = "flex-1 py-2 rounded-lg text-xs font-bold transition text-slate-500 hover:text-slate-800";
+            }
+        });
+        renderList();
+    }
+
+    function renderList() {
+        const container = document.getElementById('newsList');
+        // Filter data sesuai Tab
+        const filtered = ALL_DATA.filter(item => item.status === CURRENT_TAB);
+
+        if(filtered.length === 0) {
+            container.innerHTML = `<div class="text-center py-10 text-slate-400 text-sm bg-white rounded-2xl border border-dashed border-slate-300">Tidak ada berita ${CURRENT_TAB.toLowerCase()}.</div>`;
+            return;
+        }
+
+        let html = '';
+        filtered.forEach(item => {
+            // Tentukan tombol aksi berdasarkan status
+            let actions = '';
+            
+            if(CURRENT_TAB === 'DRAFT') {
+                actions = `
+                <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-100">
+                    <button onclick="updateStatus(${item.id}, 'REJECTED')" class="py-2 rounded-lg bg-red-50 text-red-600 text-xs font-bold hover:bg-red-100 transition"><i class="bi bi-x-circle"></i> TOLAK</button>
+                    <button onclick="updateStatus(${item.id}, 'PUBLISHED')" class="py-2 rounded-lg bg-green-50 text-green-600 text-xs font-bold hover:bg-green-100 transition"><i class="bi bi-check-circle-fill"></i> TAYANGKAN</button>
+                </div>`;
+            } else if (CURRENT_TAB === 'PUBLISHED') {
+                actions = `
+                <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-100">
+                     <button onclick="updateStatus(${item.id}, 'DRAFT')" class="py-2 rounded-lg bg-slate-50 text-slate-500 text-xs font-bold hover:bg-slate-100 transition"><i class="bi bi-arrow-counterclockwise"></i> TARIK KE DRAFT</button>
+                     <div class="flex items-center justify-center text-xs text-green-600 font-bold bg-green-50 rounded-lg"><i class="bi bi-broadcast"></i> SEDANG TAYANG</div>
+                </div>`;
+            }
+
+            // Thumbnail Handling
+            const imgHtml = item.foto_url ? `<img src="${item.foto_url}" class="w-20 h-20 object-cover rounded-lg bg-slate-200 flex-none" onclick="window.open('${item.foto_url}')">` : '';
+
+            html += `
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 relative">
+                <button onclick="openEdit(${item.id})" class="absolute top-4 right-4 text-slate-300 hover:text-blue-500 transition"><i class="bi bi-pencil-square text-lg"></i></button>
+                
+                <div class="flex gap-3 mb-2">
+                    ${imgHtml}
+                    <div class="flex-1 min-w-0 pr-6">
+                        <span class="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded mb-1 inline-block">${item.kategori}</span>
+                        <h4 class="font-bold text-slate-800 text-sm leading-snug line-clamp-2">${item.judul}</h4>
+                        <p class="text-[10px] text-slate-400 mt-1"><i class="bi bi-person"></i> ${item.penulis} • ${new Date(item.created_at).toLocaleDateString()}</p>
+                    </div>
+                </div>
+                
+                <p class="text-xs text-slate-600 line-clamp-3 leading-relaxed bg-slate-50 p-2 rounded-lg">${item.isi_berita || '-'}</p>
+                
+                ${actions}
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    // 4. UPDATE STATUS ACTION
+    async function updateStatus(id, newStatus) {
+        if(!confirm(`Ubah status jadi ${newStatus}?`)) return;
+
+        // Optimistic UI Update (Langsung hilang dari list biar cepat)
+        ALL_DATA = ALL_DATA.filter(i => i.id !== id);
+        renderList();
+
+        try {
+            await fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'update_status', id: id, status: newStatus })
+            });
+            // Background process sukses
+        } catch (e) {
+            alert("Gagal update status di server. Refresh halaman.");
+        }
+    }
+
+    // 5. EDIT ACTION
+    function openEdit(id) {
+        const item = ALL_DATA.find(i => i.id === id);
+        if(!item) return;
+
+        document.getElementById('editId').value = id;
+        document.getElementById('editJudul').value = item.judul;
+        document.getElementById('editKategori').value = item.kategori;
+        document.getElementById('editIsi').value = item.isi_berita;
+        
+        document.getElementById('modalEdit').classList.remove('hidden');
+    }
+
+    function closeEdit() { document.getElementById('modalEdit').classList.add('hidden'); }
+
+    async function saveEdit() {
+        const id = document.getElementById('editId').value;
+        const judul = document.getElementById('editJudul').value;
+        const kat = document.getElementById('editKategori').value;
+        const isi = document.getElementById('editIsi').value;
+        const btn = document.querySelector('#modalEdit button:last-child');
+
+        btn.innerText = "Menyimpan...";
+        btn.disabled = true;
+
+        try {
+            await fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    action: 'edit_text', 
+                    id: id, judul: judul, kategori: kat, isi: isi 
+                })
+            });
+            
+            // Update Data Lokal
+            const idx = ALL_DATA.findIndex(i => i.id == id);
+            if(idx !== -1) {
+                ALL_DATA[idx].judul = judul;
+                ALL_DATA[idx].kategori = kat;
+                ALL_DATA[idx].isi_berita = isi;
+            }
+            
+            closeEdit();
+            renderList();
+            alert("Data berhasil diupdate!");
+
+        } catch (e) {
+            alert("Gagal simpan edit.");
+        } finally {
+            btn.innerText = "SIMPAN PERUBAHAN";
+            btn.disabled = false;
+        }
+    }
+  </script>
+</body>
+</html>
