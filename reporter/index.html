@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Kirim Berita - PMR Newsroom</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  
+  <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] } } } }</script>
+  <style>
+    body {
+        background: linear-gradient(-45deg, #f1f5f9, #eff6ff, #fef2f2, #f8fafc);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+    }
+    @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+    .glass {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+    
+    .loader { border: 3px solid rgba(220, 38, 38, 0.1); border-top: 3px solid #DC2626; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Custom Input Style */
+    .input-field {
+        width: 100%;
+        background-color: rgba(255,255,255,0.6);
+        border: 1px solid rgba(255,255,255,0.5);
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 14px;
+        color: #1e293b;
+        outline: none;
+        transition: all 0.3s;
+    }
+    .input-field:focus {
+        background-color: #fff;
+        border-color: #fca5a5;
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+    }
+  </style>
+</head>
+<body class="text-slate-800 font-sans min-h-screen p-4 flex justify-center items-start pt-10 pb-20">
+
+  <div class="glass w-full max-w-lg rounded-3xl overflow-hidden relative">
+      <div class="bg-white/50 p-6 border-b border-white/50">
+          <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">KIRIM BERITA</h1>
+          <p class="text-xs font-bold text-red-500 uppercase tracking-widest mt-1">Jurnalistik Remaja Temu Bakti</p>
+      </div>
+
+      <div class="p-6 space-y-5">
+          
+          <div id="alertBox" class="hidden p-4 rounded-xl text-sm font-bold mb-4"></div>
+
+          <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Judul Berita</label>
+              <input type="text" id="judul" class="input-field font-bold text-lg" placeholder="Contoh: Serunya Lomba Tandu...">
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+              <div>
+                  <label class="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Penulis / Unit</label>
+                  <input type="text" id="penulis" class="input-field" placeholder="Nama / Sekolah">
+              </div>
+              <div>
+                  <label class="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Kategori</label>
+                  <select id="kategori" class="input-field appearance-none">
+                      <option value="Berita">📰 Berita Kegiatan</option>
+                      <option value="Opini">💡 Opini / Artikel</option>
+                      <option value="Profil">👤 Profil Tokoh</option>
+                      <option value="Sastra">✒️ Puisi / Cerpen</option>
+                      <option value="Lainnya">🔖 Lainnya</option>
+                  </select>
+              </div>
+          </div>
+
+          <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Foto Dokumentasi</label>
+              <div class="relative w-full aspect-video rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/50 hover:bg-slate-100 transition flex flex-col items-center justify-center cursor-pointer group overflow-hidden" onclick="document.getElementById('fotoInput').click()">
+                  
+                  <input type="file" id="fotoInput" class="hidden" accept="image/*" onchange="previewImage(event)">
+                  
+                  <div id="placeholder" class="text-center p-4">
+                      <div class="w-12 h-12 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition"><i class="bi bi-camera-fill text-xl"></i></div>
+                      <p class="text-xs text-slate-400 font-bold">Tap untuk ambil foto</p>
+                      <p class="text-[10px] text-slate-300 mt-1">Otomatis dikompres</p>
+                  </div>
+                  <img id="preview" class="absolute inset-0 w-full h-full object-cover hidden">
+              </div>
+          </div>
+
+          <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Isi Berita</label>
+              <textarea id="isi" rows="6" class="input-field resize-none leading-relaxed" placeholder="Tulis beritamu di sini (Minimal 1 paragraf)..."></textarea>
+          </div>
+
+          <button onclick="submitBerita()" id="btnSubmit" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl shadow-lg shadow-slate-900/20 hover:bg-black active:scale-95 transition flex items-center justify-center gap-2">
+              <span>KIRIM KE REDAKSI</span>
+              <i class="bi bi-send-fill"></i>
+          </button>
+
+      </div>
+  </div>
+
+  <script>
+    // ⚠️ PASTE URL GAS ANDA DI SINI ⚠️
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbx693z5rUDTuE8_GrkvSeXOwt60OzIBSgQ64aMr20V00iUQz_wylG8JfMWprcfV3xOHjw/exec"; 
+
+    let compressedImageBase64 = "";
+
+    // 1. Logic Preview & Kompresi Gambar
+    function previewImage(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Tampilkan Preview
+        const preview = document.getElementById('preview');
+        const placeholder = document.getElementById('placeholder');
+        preview.src = URL.createObjectURL(file);
+        preview.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+
+        // Proses Kompresi
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function (e) {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = function () {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                // Resize Max Width 1000px
+                const MAX_WIDTH = 1000;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Convert to Base64 JPEG Quality 0.7
+                // Hasil string ini yang akan dikirim ke server (tanpa prefix data:image...)
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                compressedImageBase64 = dataUrl.split(',')[1]; 
+            }
+        }
+    }
+
+    // 2. Logic Kirim Data
+    async function submitBerita() {
+        const btn = document.getElementById('btnSubmit');
+        const alertBox = document.getElementById('alertBox');
+        
+        // Ambil Data
+        const data = {
+            action: 'upload_berita',
+            judul: document.getElementById('judul').value.trim(),
+            penulis: document.getElementById('penulis').value.trim(),
+            kategori: document.getElementById('kategori').value,
+            isi: document.getElementById('isi').value.trim(),
+            foto_base64: compressedImageBase64,
+            foto_name: "img_" + Date.now() + ".jpg"
+        };
+
+        // Validasi
+        if (!data.judul || !data.penulis || !data.isi) {
+            showAlert("Mohon lengkapi Judul, Penulis, dan Isi Berita.", "bg-red-100 text-red-600");
+            return;
+        }
+
+        // Loading State
+        btn.disabled = true;
+        btn.innerHTML = '<div class="loader !border-white/20 !border-t-white mx-auto"></div>';
+        alertBox.classList.add('hidden');
+
+        try {
+            // Kirim ke GAS
+            // Note: Menggunakan 'no-cors' agar tidak error di browser, 
+            // tapi kita tidak bisa baca response JSON. 
+            // Asumsi: Jika tidak error network, berarti sukses.
+            
+            await fetch(GAS_URL, {
+                method: "POST",
+                body: JSON.stringify(data)
+            });
+
+            // Sukses
+            showAlert("✅ Berita terkirim! Menunggu persetujuan redaksi.", "bg-green-100 text-green-700");
+            resetForm();
+
+        } catch (error) {
+            console.error(error);
+            showAlert("❌ Gagal mengirim. Cek koneksi internet.", "bg-red-100 text-red-600");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<span>KIRIM KE REDAKSI</span><i class="bi bi-send-fill"></i>';
+        }
+    }
+
+    function showAlert(msg, classes) {
+        const box = document.getElementById('alertBox');
+        box.className = `p-4 rounded-xl text-sm font-bold mb-4 animate-pulse ${classes}`;
+        box.innerText = msg;
+        box.classList.remove('hidden');
+    }
+
+    function resetForm() {
+        document.getElementById('judul').value = "";
+        document.getElementById('isi').value = "";
+        document.getElementById('fotoInput').value = "";
+        document.getElementById('preview').classList.add('hidden');
+        document.getElementById('placeholder').classList.remove('hidden');
+        compressedImageBase64 = "";
+    }
+  </script>
+</body>
+</html>
