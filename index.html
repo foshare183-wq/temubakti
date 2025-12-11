@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Mading Digital PMI Malut</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Patrick+Hand&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  
+  <script>
+    tailwind.config = { 
+        theme: { 
+            extend: { 
+                fontFamily: { 
+                    sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    hand: ['"Patrick Hand"', 'cursive'] 
+                },
+                animation: {
+                    'blob': 'blob 7s infinite',
+                },
+                keyframes: {
+                    blob: {
+                        '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                        '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                        '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                        '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                    }
+                }
+            } 
+        } 
+    }
+  </script>
+  <style>
+    body { background-color: #f8fafc; scroll-behavior: smooth; }
+    .loader { border: 3px solid #e2e8f0; border-top: 3px solid #dc2626; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* Efek Kertas Menfess */
+    .menfess-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .menfess-card:hover { transform: translateY(-5px) rotate(1deg); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+  </style>
+</head>
+<body class="text-slate-800 font-sans min-h-screen flex flex-col overflow-x-hidden">
+
+  <nav class="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+          <div class="flex items-center gap-3">
+              <img src="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/logo%20temu%20bakti.png" class="h-10 w-auto">
+              <div class="hidden sm:block">
+                  <h1 class="font-bold text-slate-900 text-sm md:text-base leading-tight">MADING DIGITAL</h1>
+                  <p class="text-[10px] md:text-xs text-red-600 font-bold tracking-wider uppercase">PMI Prov. Maluku Utara</p>
+              </div>
+          </div>
+          <button onclick="toggleModal('modalKirimMenfess')" class="bg-slate-900 hover:bg-red-600 text-white px-4 py-2 rounded-full text-xs font-bold transition flex items-center gap-2">
+            <i class="bi bi-send-plus-fill"></i> Kirim Surat
+          </button>
+      </div>
+  </nav>
+
+  <section class="relative py-12 bg-slate-50 border-b border-slate-200 overflow-hidden">
+      <div class="absolute top-0 left-0 w-full h-full overflow-hidden opacity-30 pointer-events-none">
+          <div class="absolute top-0 left-1/4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+          <div class="absolute top-0 right-1/4 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+          <div class="absolute -bottom-8 left-1/3 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 relative z-10">
+         <div class="flex justify-between items-end mb-8">
+    <div class="flex items-center gap-4">
+        <div>
+            <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight">💌 Papan Surat</h2>
+            <p class="text-slate-500 mt-1 text-sm">Pesan rahasia & salam-salam terbaru.</p>
+        </div>
+        <button onclick="refreshMenfess()" class="w-10 h-10 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 hover:text-blue-600 hover:border-blue-300 transition active:scale-95" title="Refresh Pesan">
+            <i class="bi bi-arrow-clockwise text-lg" id="iconRefresh"></i>
+        </button>
+    </div>
+    
+    <button onclick="openAllMenfess()" class="hidden sm:block text-sm font-bold text-red-600 hover:text-red-700 underline underline-offset-4 decoration-2">
+        Lihat Semua Surat <i class="bi bi-arrow-right"></i>
+    </button>
+</div>
+
+          <div id="menfessPreview" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="loader mx-auto col-span-full"></div>
+          </div>
+
+          <div class="mt-6 text-center sm:hidden">
+            <button onclick="openAllMenfess()" class="text-sm font-bold text-slate-500 border border-slate-300 px-6 py-2 rounded-full hover:bg-white transition">Lihat Semua Surat</button>
+          </div>
+      </div>
+  </section>
+
+  <section class="py-12 bg-white">
+      <div class="max-w-7xl mx-auto px-4">
+          
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-2">
+                <span class="w-2 h-8 bg-red-600 rounded-full"></span> Kabar Kegiatan
+            </h2>
+            
+            <div class="hidden md:flex gap-2">
+                <button onclick="filterNews('SEMUA')" class="filter-btn active px-4 py-1 rounded-full text-xs font-bold border border-slate-200 text-slate-500 hover:bg-slate-50 transition">Semua</button>
+                <button onclick="filterNews('Berita')" class="filter-btn px-4 py-1 rounded-full text-xs font-bold border border-slate-200 text-slate-500 hover:bg-slate-50 transition">Berita</button>
+                <button onclick="filterNews('Opini')" class="filter-btn px-4 py-1 rounded-full text-xs font-bold border border-slate-200 text-slate-500 hover:bg-slate-50 transition">Opini</button>
+            </div>
+        </div>
+
+        <div id="newsContainer" class="min-h-[400px]">
+             <div class="text-center py-20">
+                <div class="loader mx-auto"></div>
+            </div>
+        </div>
+
+      </div>
+  </section>
+
+
+  <footer class="bg-slate-900 text-white py-12 mt-auto">
+      <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div class="text-center md:text-left">
+              <h3 class="font-bold text-lg mb-1">PANITIA TEMU BAKTI</h3>
+              <p class="text-slate-400 text-xs">PMI Provinsi Maluku Utara</p>
+          </div>
+          <div class="text-slate-500 text-sm">
+              &copy; 2026 Mading Digital
+          </div>
+      </div>
+  </footer>
+
+
+  <div id="modalBerita" class="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-sm hidden overflow-y-auto animate-fade-in">
+      <div class="min-h-screen flex items-center justify-center p-4 py-10">
+          <div class="bg-white w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl relative">
+              <button onclick="closeModal('modalBerita')" class="absolute top-4 right-4 z-20 w-10 h-10 bg-black/50 hover:bg-red-600 rounded-full text-white flex items-center justify-center transition backdrop-blur-md"><i class="bi bi-x-lg"></i></button>
+              
+              <div class="h-64 md:h-[500px] w-full bg-slate-200 relative">
+                  <img id="viewFoto" class="w-full h-full object-cover">
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                  <div class="absolute bottom-0 left-0 p-6 md:p-10 w-full">
+                      <span id="viewKategori" class="text-[10px] font-bold text-white bg-red-600 px-3 py-1 rounded-full uppercase tracking-wider mb-3 inline-block">BERITA</span>
+                      <h1 id="viewJudul" class="text-2xl md:text-4xl font-extrabold text-white leading-tight">Judul Berita</h1>
+                  </div>
+              </div>
+              
+              <div class="p-6 md:p-12 relative">
+                  <div class="flex items-center gap-4 text-sm text-slate-500 mb-8 border-b border-slate-100 pb-6">
+                      <span class="flex items-center gap-1 font-bold text-slate-900"><i class="bi bi-person-circle"></i> <span id="viewPenulis">Penulis</span></span>
+                      <span>&bull;</span>
+                      <span id="viewTanggal">Tanggal</span>
+                  </div>
+                  <div id="viewIsi" class="prose prose-lg prose-slate max-w-none text-slate-700 whitespace-pre-wrap leading-relaxed"></div>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <div id="modalKirimMenfess" class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl transform scale-100 transition-all">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-slate-800">Kirim Surat Kaleng</h3>
+            <button onclick="toggleModal('modalKirimMenfess')" class="text-slate-400 hover:text-red-500"><i class="bi bi-x-lg"></i></button>
+        </div>
+        
+        <form id="formMenfess" onsubmit="submitMenfess(event)" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <input type="text" name="pengirim" placeholder="Dari (Anonim)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-red-500 outline-none">
+                <input type="text" name="untuk" placeholder="Untuk Siapa?" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-red-500 outline-none" required>
+            </div>
+            <textarea name="pesan" rows="3" placeholder="Tulis pesan rahasiamu disini..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-red-500 outline-none font-hand text-lg" required></textarea>
+            
+            <div>
+                <p class="text-xs text-slate-400 mb-2 font-bold uppercase tracking-wider">Pilih Warna Kertas</p>
+                <div class="flex gap-3 justify-center">
+                    <label class="cursor-pointer group"><input type="radio" name="warna" value="bg-yellow-100" class="peer hidden" checked><div class="w-10 h-10 rounded-full bg-yellow-200 border-4 border-transparent peer-checked:border-slate-800 shadow-sm group-hover:scale-110 transition"></div></label>
+                    <label class="cursor-pointer group"><input type="radio" name="warna" value="bg-blue-100" class="peer hidden"><div class="w-10 h-10 rounded-full bg-blue-200 border-4 border-transparent peer-checked:border-slate-800 shadow-sm group-hover:scale-110 transition"></div></label>
+                    <label class="cursor-pointer group"><input type="radio" name="warna" value="bg-pink-100" class="peer hidden"><div class="w-10 h-10 rounded-full bg-pink-200 border-4 border-transparent peer-checked:border-slate-800 shadow-sm group-hover:scale-110 transition"></div></label>
+                    <label class="cursor-pointer group"><input type="radio" name="warna" value="bg-green-100" class="peer hidden"><div class="w-10 h-10 rounded-full bg-green-200 border-4 border-transparent peer-checked:border-slate-800 shadow-sm group-hover:scale-110 transition"></div></label>
+                </div>
+            </div>
+
+            <button type="submit" id="btnKirimMenfess" class="w-full py-3 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition shadow-lg shadow-slate-900/20">Kirim Pesan!</button>
+        </form>
+    </div>
+  </div>
+
+  <div id="modalAllMenfess" class="fixed inset-0 z-[100] bg-slate-50/95 backdrop-blur-md hidden overflow-y-auto">
+     <div class="max-w-7xl mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-8 sticky top-0 bg-slate-50/95 py-4 z-20 border-b border-slate-200">
+             <h2 class="text-2xl font-bold text-slate-800">Semua Surat Kaleng</h2>
+             <button onclick="toggleModal('modalAllMenfess')" class="bg-white border border-slate-300 w-10 h-10 rounded-full hover:bg-red-50 hover:text-red-600 transition"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div id="allMenfessContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pb-20">
+            </div>
+     </div>
+  </div>
+
+
+<script>
+    // --- KONFIGURASI ---
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbx693z5rUDTuE8_GrkvSeXOwt60OzIBSgQ64aMr20V00iUQz_wylG8JfMWprcfV3xOHjw/exec"; 
+    const SB_URL = 'https://twzdeiwqjqruhmlkphge.supabase.co'; 
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3emRlaXdxanFydWhtbGtwaGdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0MjU3NTYsImV4cCI6MjA4MTAwMTc1Nn0.d-yPuRMGq79Y5HlGh_5ASgV1hgoxTkQUMCYIWP6YeGc';
+
+    const SB_HEADERS = {
+        "apikey": SB_KEY,
+        "Authorization": "Bearer " + SB_KEY,
+        "Content-Type": "application/json"
+    };
+
+    let ALL_NEWS = [];
+    let ALL_MENFESS = [];
+    let IS_LOADING_MENFESS = false;
+
+    // --- INIT ---
+    window.onload = () => {
+        loadData();
+    };
+
+    async function loadData() {
+        Promise.all([loadMenfessDirect(), loadNewsDirect()]);
+    }
+
+    function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    // ==========================================
+    // 1. DATA LOADING
+    // ==========================================
+    async function loadNewsDirect() {
+        const c = document.getElementById('newsContainer');
+        try {
+            const res = await fetch(`${SB_URL}/rest/v1/berita_pmi?status=eq.PUBLISHED&select=*&order=created_at.desc`, { headers: SB_HEADERS });
+            const data = await res.json();
+            if(data.length > 0) { ALL_NEWS = data; filterNews('SEMUA'); }
+            else { c.innerHTML = `<div class="text-center py-20 text-slate-400">Belum ada berita.</div>`; }
+        } catch(e) { console.error(e); }
+    }
+
+    async function refreshMenfess() {
+        if(IS_LOADING_MENFESS) return;
+        const btnIcon = document.getElementById('iconRefresh');
+        btnIcon.classList.add('animate-spin');
+        await loadMenfessDirect();
+        setTimeout(() => btnIcon.classList.remove('animate-spin'), 1000);
+    }
+
+    async function loadMenfessDirect() {
+        IS_LOADING_MENFESS = true;
+        const c = document.getElementById('menfessPreview');
+        if(ALL_MENFESS.length === 0) c.innerHTML = '<div class="loader mx-auto col-span-full"></div>';
+
+        try {
+            const res = await fetch(`${SB_URL}/rest/v1/menfess_pmi?status=eq.PUBLISHED&select=*&order=created_at.desc`, { headers: SB_HEADERS });
+            const data = await res.json();
+            
+            if(data.length > 0) {
+                ALL_MENFESS = data;
+                renderMenfessGrid(c, ALL_MENFESS.slice(0, 4)); // Render Depan
+                
+                // Jika modal sedang terbuka, update juga isinya biar realtime
+                const modalContainer = document.getElementById('allMenfessContainer');
+                if(!document.getElementById('modalAllMenfess').classList.contains('hidden')) {
+                    renderMenfessGrid(modalContainer, ALL_MENFESS);
+                }
+            } else {
+                c.innerHTML = `<div class="col-span-full text-center py-10 opacity-50"><p>Belum ada surat masuk.</p></div>`;
+            }
+        } catch(e) { console.error(e); } finally { IS_LOADING_MENFESS = false; }
+    }
+
+    // ==========================================
+    // 2. LOGIC REAKSI (SINGLE CHOICE & SYNC)
+    // ==========================================
+    const EMOJI_MAP = [
+        { icon: '👍🏻', col: 'r_thumb' }, { icon: '❤️', col: 'r_love' },
+        { icon: '😂', col: 'r_laugh' }, { icon: '😱', col: 'r_shock' },
+        { icon: '🙏🏻', col: 'r_pray' }, { icon: '🔥', col: 'r_fire' }
+    ];
+
+    function renderMenfessGrid(container, data) {
+        let html = '';
+        data.forEach((item, index) => {
+            const rotation = (index % 2 === 0) ? '-rotate-1' : 'rotate-1';
+            
+            // Ambil pilihan user saat ini untuk pesan ini
+            const myChoice = localStorage.getItem(`reaction_${item.id}`); // Ex: 'r_love'
+
+            let reactionHtml = '';
+            EMOJI_MAP.forEach(em => {
+                const isSelected = (myChoice === em.col);
+                const activeClass = isSelected ? 'scale-125 opacity-100 grayscale-0' : 'grayscale opacity-50 hover:opacity-100 hover:scale-110';
+                const count = item[em.col] > 0 ? item[em.col] : ''; 
+
+                // Kita kasih ID class unik biar bisa di-update massal (js-react-{id}-{type})
+                reactionHtml += `
+                <button onclick="handleReaction(${item.id}, '${em.col}')" 
+                    class="js-react-${item.id}-${em.col} flex flex-col items-center justify-center transition transform duration-200 ${activeClass}">
+                    <span class="text-lg">${em.icon}</span>
+                    <span class="text-[10px] font-bold text-slate-600 h-3 leading-none count-label">${count}</span>
+                </button>`;
+            });
+
+            html += `
+            <div class="menfess-card relative p-5 rounded-3xl ${item.warna_bg} shadow-sm border border-black/5 flex flex-col h-full min-h-[240px] ${rotation}">
+                <div class="flex justify-between items-start mb-3 border-b border-black/10 pb-2">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-slate-900/50">To: ${item.untuk}</span>
+                    <i class="bi bi-pin-angle-fill text-slate-900/20 text-xl"></i>
+                </div>
+                <p class="font-hand text-xl md:text-2xl leading-snug text-slate-800 flex-1 break-words mb-4">"${item.pesan}"</p>
+                <div class="mt-auto">
+                    <div class="flex justify-between items-end mb-3">
+                        <span class="text-xs font-bold text-slate-700">- ${item.pengirim}</span>
+                        <span class="text-[10px] text-slate-500/80">${new Date(item.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div class="flex justify-between items-end pt-2 border-t border-black/5 bg-white/30 rounded-xl p-2 backdrop-blur-sm">
+                        ${reactionHtml}
+                    </div>
+                </div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    async function handleReaction(id, newType) {
+        const storageKey = `reaction_${id}`;
+        const oldType = localStorage.getItem(storageKey); // Apa yg dipilih sebelumnya?
+
+        // Skenario 1: Klik ikon yang SAMA (Berarti mau UNLIKE / Batal)
+        if (oldType === newType) {
+            localStorage.removeItem(storageKey);
+            updateVisualCount(id, oldType, -1, false); // Kurangi visual
+            await rpcSupabase('decrement_reaction', id, oldType); // Kurangi DB
+        } 
+        // Skenario 2: Belum pernah pilih (BARU)
+        else if (!oldType) {
+            localStorage.setItem(storageKey, newType);
+            updateVisualCount(id, newType, +1, true); // Tambah visual
+            await rpcSupabase('increment_reaction', id, newType); // Tambah DB
+        } 
+        // Skenario 3: Ganti Pilihan (Misal dari Love ke Laugh)
+        else {
+            localStorage.setItem(storageKey, newType);
+            
+            // Hapus yang lama
+            updateVisualCount(id, oldType, -1, false);
+            await rpcSupabase('decrement_reaction', id, oldType);
+            
+            // Tambah yang baru
+            updateVisualCount(id, newType, +1, true);
+            await rpcSupabase('increment_reaction', id, newType);
+        }
+    }
+
+    // Fungsi Update Tampilan di SEMUA tempat (Depan & Modal) secara bersamaan
+    function updateVisualCount(id, type, delta, isActive) {
+        // Cari semua tombol yang ID dan Tipe-nya cocok (bisa ada 2: di depan & di modal)
+        const buttons = document.querySelectorAll(`.js-react-${id}-${type}`);
+        
+        buttons.forEach(btn => {
+            // Update Style
+            if(isActive) {
+                btn.classList.remove('grayscale', 'opacity-50');
+                btn.classList.add('scale-125', 'opacity-100', 'grayscale-0');
+            } else {
+                btn.classList.add('grayscale', 'opacity-50');
+                btn.classList.remove('scale-125', 'opacity-100', 'grayscale-0');
+            }
+
+            // Update Angka
+            const label = btn.querySelector('.count-label');
+            let current = parseInt(label.innerText) || 0;
+            let next = current + delta;
+            label.innerText = (next > 0) ? next : '';
+        });
+    }
+
+    // Wrapper Request Supabase
+    async function rpcSupabase(funcName, id, col) {
+        try {
+            await fetch(`${SB_URL}/rest/v1/rpc/${funcName}`, {
+                method: 'POST',
+                headers: SB_HEADERS,
+                body: JSON.stringify({ row_id: id, col_name: col })
+            });
+        } catch(e) { console.error("RPC Error", e); }
+    }
+
+    // ==========================================
+    // 3. LAIN-LAIN
+    // ==========================================
+    async function submitMenfess(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnKirimMenfess');
+        const form = document.getElementById('formMenfess');
+        btn.innerText = 'Mengirim...'; btn.disabled = true;
+
+        try {
+            await fetch(GAS_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({
+                    action: 'upload_menfess',
+                    pengirim: form.pengirim.value,
+                    untuk: form.untuk.value,
+                    pesan: form.pesan.value,
+                    warna_bg: form.querySelector('input[name="warna"]:checked').value
+                }) 
+            });
+            alert('Pesanmu terkirim ke Redaksi!');
+            toggleModal('modalKirimMenfess');
+            form.reset();
+        } catch(err) { alert('Gagal mengirim.'); }
+        btn.innerText = 'Kirim Pesan!'; btn.disabled = false;
+    }
+
+    function openAllMenfess() {
+        const c = document.getElementById('allMenfessContainer');
+        renderMenfessGrid(c, ALL_MENFESS);
+        toggleModal('modalAllMenfess');
+    }
+
+    // Helper Berita... (Sama seperti sebelumnya)
+    function filterNews(cat) {
+        document.querySelectorAll('.filter-btn').forEach(b => {
+            b.classList.remove('bg-red-600', 'text-white', 'border-red-600');
+            b.classList.add('border-slate-200', 'text-slate-500');
+            if(b.innerText.toUpperCase() === cat.toUpperCase() || (cat==='SEMUA' && b.innerText==='Semua')) {
+                b.classList.remove('border-slate-200', 'text-slate-500');
+                b.classList.add('bg-red-600', 'text-white', 'border-red-600');
+            }
+        });
+        const filtered = (cat === 'SEMUA') ? ALL_NEWS : ALL_NEWS.filter(i => i.kategori === cat);
+        renderNews(filtered);
+    }
+
+    function renderNews(data) {
+        const c = document.getElementById('newsContainer');
+        if(data.length === 0) { c.innerHTML = '<p class="text-center py-10">Tidak ditemukan.</p>'; return; }
+        
+        let html = '';
+        const isHeadlineMode = (data === ALL_NEWS);
+        
+        if (isHeadlineMode && data.length > 0) {
+            const main = data[0];
+            const others = data.slice(1);
+            html += `
+            <div onclick="openBerita(${main.id})" class="group cursor-pointer mb-10 relative w-full h-[300px] md:h-[500px] rounded-3xl overflow-hidden shadow-2xl">
+                <img src="${main.foto_url}=s2000" class="w-full h-full object-cover group-hover:scale-105 transition duration-1000">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+                <div class="absolute bottom-0 left-0 p-6 md:p-12 w-full md:w-2/3">
+                    <span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full mb-3 inline-block shadow-lg">HEADLINE</span>
+                    <h2 class="text-3xl md:text-5xl font-extrabold text-white leading-tight mb-4 drop-shadow-lg group-hover:text-red-200 transition">${main.judul}</h2>
+                    <div class="flex items-center gap-3 text-white/80 text-sm font-medium">
+                        <img src="https://ui-avatars.com/api/?name=${main.penulis}&background=random" class="w-8 h-8 rounded-full border border-white/50">
+                        <span>${main.penulis}</span> &bull; <span>${formatDate(main.created_at)}</span>
+                    </div>
+                </div>
+            </div>`;
+            html += '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">';
+            others.forEach(item => html += createCard(item));
+            html += '</div>';
+        } else {
+            html += '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">';
+            data.forEach(item => html += createCard(item));
+            html += '</div>';
+        }
+        c.innerHTML = html;
+    }
+
+    function createCard(item) {
+        return `
+        <div onclick="openBerita(${item.id})" class="bg-white rounded-2xl border border-slate-100 overflow-hidden cursor-pointer hover:shadow-xl hover:-translate-y-2 transition duration-300 group flex flex-col h-full">
+            <div class="h-56 overflow-hidden relative">
+                <img src="${item.foto_url}=s600" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
+                <span class="absolute top-4 left-4 text-[10px] font-bold bg-white/90 backdrop-blur text-slate-900 px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">${item.kategori}</span>
+            </div>
+            <div class="p-6 flex flex-col flex-1">
+                <h3 class="font-bold text-slate-800 text-xl leading-snug line-clamp-2 mb-3 group-hover:text-red-600 transition">${item.judul}</h3>
+                <div class="mt-auto flex items-center justify-between text-xs text-slate-400 pt-4 border-t border-slate-50">
+                     <span class="font-semibold text-slate-500">${item.penulis}</span>
+                     <span>${formatDate(item.created_at)}</span>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function openBerita(id) {
+        const item = ALL_NEWS.find(i => i.id === id);
+        if(!item) return;
+        document.getElementById('viewFoto').src = item.foto_url;
+        document.getElementById('viewKategori').innerText = item.kategori;
+        document.getElementById('viewJudul').innerText = item.judul;
+        document.getElementById('viewPenulis').innerText = item.penulis;
+        document.getElementById('viewTanggal').innerText = formatDate(item.created_at);
+        document.getElementById('viewIsi').innerText = item.isi_berita;
+        document.getElementById('modalBerita').scrollTop = 0;
+        toggleModal('modalBerita');
+    }
+
+    function formatDate(iso) { 
+        if(!iso) return '-'; 
+        return new Date(iso).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}); 
+    }
+</script>
+</body>
+</html>
