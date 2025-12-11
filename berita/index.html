@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Mading Digital PMI Malut</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Portal Berita, Menfess, dan Lost Found Temu Bakti PMI Malut">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Patrick+Hand&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  
+  <script>
+    tailwind.config = { 
+        theme: { 
+            extend: { 
+                fontFamily: { 
+                    sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    hand: ['"Patrick Hand"', 'cursive'] 
+                },
+                animation: {
+                    'bounce-slow': 'bounce 3s infinite',
+                }
+            } 
+        } 
+    }
+  </script>
+  <style>
+    body { background-color: #f8fafc; scroll-behavior: smooth; }
+    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .loader { border: 3px solid #e2e8f0; border-top: 3px solid #dc2626; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* Tab Active Style */
+    .tab-btn.active { border-bottom: 2px solid #dc2626; color: #dc2626; font-weight: 700; }
+    .tab-btn { color: #64748b; font-weight: 600; padding-bottom: 8px; transition: all 0.3s; }
+  </style>
+</head>
+<body class="text-slate-800 font-sans min-h-screen flex flex-col">
+
+  <nav class="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 pt-3 pb-0 flex flex-col gap-4">
+          <div class="flex justify-between items-center pb-2">
+              <div class="flex items-center gap-3">
+                  <img src="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/logo%20temu%20bakti.png" class="h-10 w-auto">
+                  <div class="hidden sm:block">
+                      <h1 class="font-bold text-slate-900 text-sm md:text-base leading-tight">MADING DIGITAL</h1>
+                      <p class="text-[10px] md:text-xs text-red-600 font-bold tracking-wider uppercase">PMI Prov. Maluku Utara</p>
+                  </div>
+              </div>
+          </div>
+          
+          <div class="flex gap-6 overflow-x-auto no-scrollbar border-t border-slate-100 pt-3">
+              <button onclick="switchTab('BERITA')" id="tab-BERITA" class="tab-btn active whitespace-nowrap text-sm"><i class="bi bi-newspaper mr-1"></i> Kabar Berita</button>
+              <button onclick="switchTab('MENFESS')" id="tab-MENFESS" class="tab-btn whitespace-nowrap text-sm"><i class="bi bi-envelope-paper-heart mr-1"></i> Surat Kaleng</button>
+              <button onclick="switchTab('LOSTFOUND')" id="tab-LOSTFOUND" class="tab-btn whitespace-nowrap text-sm"><i class="bi bi-box-seam mr-1"></i> Lost & Found</button>
+          </div>
+      </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto w-full px-4 py-6 lg:py-8 min-h-[80vh]">
+      
+      <div id="section-BERITA" class="flex flex-col lg:flex-row gap-10 animate-fade-in">
+          <main class="w-full lg:w-[70%] order-2 lg:order-1">
+              <div class="lg:hidden sticky top-[115px] z-40 bg-[#f8fafc]/95 backdrop-blur-sm py-2 -mx-4 px-4 border-b border-slate-100/50 mb-6">
+                  <div class="flex gap-2 overflow-x-auto no-scrollbar">
+                      <button onclick="filterNews('SEMUA')" class="filter-btn active whitespace-nowrap px-4 py-1.5 rounded-full border border-slate-200 text-[10px] font-bold bg-white text-slate-600">Semua</button>
+                      <button onclick="filterNews('Berita')" class="filter-btn whitespace-nowrap px-4 py-1.5 rounded-full border border-slate-200 text-[10px] font-bold bg-white text-slate-600">Berita</button>
+                      <button onclick="filterNews('Opini')" class="filter-btn whitespace-nowrap px-4 py-1.5 rounded-full border border-slate-200 text-[10px] font-bold bg-white text-slate-600">Opini</button>
+                  </div>
+              </div>
+
+              <div id="newsContainer" class="min-h-[300px]">
+                  <div class="text-center py-20">
+                      <div class="loader mx-auto"></div>
+                      <p class="mt-4 text-slate-400 text-sm animate-pulse">Sedang memuat kabar...</p>
+                  </div>
+              </div>
+          </main>
+
+          <aside class="w-full lg:w-[30%] order-1 lg:order-2 space-y-8">
+              <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                  <h3 class="font-bold text-slate-900 mb-4 flex items-center gap-2 text-sm"><i class="bi bi-search text-red-500"></i> Cari Berita</h3>
+                  <div class="relative">
+                      <input type="text" onkeyup="searchNews(this.value)" placeholder="Ketik kata kunci..." class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-4 pr-10 text-sm outline-none focus:ring-2 focus:ring-red-500 transition">
+                      <i class="bi bi-search absolute right-3 top-3.5 text-slate-400"></i>
+                  </div>
+              </div>
+              <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hidden lg:block">
+                  <h3 class="font-bold text-slate-900 mb-4 flex items-center gap-2 text-sm"><i class="bi bi-funnel-fill text-red-500"></i> Kategori</h3>
+                  <div class="space-y-1">
+                      <button onclick="filterNews('SEMUA')" class="w-full text-left px-4 py-2 text-sm font-semibold text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition">Semua Berita</button>
+                      <button onclick="filterNews('Berita')" class="w-full text-left px-4 py-2 text-sm font-semibold text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">Berita Kegiatan</button>
+                      <button onclick="filterNews('Opini')" class="w-full text-left px-4 py-2 text-sm font-semibold text-slate-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition">Opini & Artikel</button>
+                      <button onclick="filterNews('Sastra')" class="w-full text-left px-4 py-2 text-sm font-semibold text-slate-600 hover:text-pink-600 hover:bg-pink-50 rounded-lg transition">Sastra</button>
+                  </div>
+              </div>
+          </aside>
+      </div>
+
+      <div id="section-MENFESS" class="hidden animate-fade-in relative">
+          <div class="flex justify-between items-end mb-8">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-800">Papan Surat Kaleng</h2>
+                <p class="text-slate-500 text-sm">Kirim pesan rahasia, salam-salam, atau semangat!</p>
+            </div>
+            <button onclick="toggleModal('modalKirimMenfess')" class="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white px-5 py-2.5 rounded-full shadow-lg hover:shadow-pink-500/30 transition transform hover:-translate-y-1 font-bold text-sm flex items-center gap-2">
+                <i class="bi bi-send-plus-fill"></i> Tulis Pesan
+            </button>
+          </div>
+
+          <div id="menfessContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+               <div class="col-span-full text-center py-20"><div class="loader mx-auto"></div></div>
+          </div>
+      </div>
+
+      <div id="section-LOSTFOUND" class="hidden animate-fade-in">
+        <div class="flex justify-between items-end mb-8">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-800">Lost & Found</h2>
+                <p class="text-slate-500 text-sm">Info barang hilang dan ditemukan di lokasi kegiatan.</p>
+            </div>
+            <button onclick="toggleModal('modalLaporBarang')" class="bg-slate-800 hover:bg-slate-900 text-white px-5 py-2.5 rounded-full shadow-lg transition transform hover:-translate-y-1 font-bold text-sm flex items-center gap-2">
+                <i class="bi bi-camera-fill"></i> Lapor Barang
+            </button>
+          </div>
+
+          <div id="lfContainer" class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+               <div class="col-span-full text-center py-20"><div class="loader mx-auto"></div></div>
+          </div>
+      </div>
+
+  </div>
+
+  <footer class="bg-white border-t border-slate-200 py-10 mt-auto">
+      <div class="max-w-7xl mx-auto px-4 text-center">
+          <p class="text-slate-900 font-bold text-sm">© 2026 Panitia Temu Bakti</p>
+          <p class="text-slate-400 text-xs mt-1">PMI Provinsi Maluku Utara</p>
+      </div>
+  </footer>
+
+  <div id="modalBerita" class="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-sm hidden overflow-y-auto">
+      <div class="min-h-screen flex items-center justify-center p-4 py-10">
+          <div class="bg-white w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl relative">
+              <button onclick="closeModal('modalBerita')" class="absolute top-4 right-4 z-20 w-10 h-10 bg-black/50 hover:bg-red-600 rounded-full text-white flex items-center justify-center transition backdrop-blur-md"><i class="bi bi-x-lg"></i></button>
+              <div class="h-64 md:h-80 w-full bg-slate-200 relative">
+                  <img id="viewFoto" class="w-full h-full object-cover">
+              </div>
+              <div class="p-6 md:p-10 -mt-10 relative z-10 bg-white rounded-t-3xl">
+                  <span id="viewKategori" class="text-[10px] font-bold text-white bg-blue-600 px-3 py-1 rounded-full uppercase mb-4 inline-block">BERITA</span>
+                  <h1 id="viewJudul" class="text-2xl md:text-3xl font-extrabold text-slate-900 mb-4">Judul</h1>
+                  <p class="text-xs text-slate-400 font-bold mb-6 flex gap-4">
+                      <span id="viewPenulis"><i class="bi bi-person"></i> Penulis</span>
+                      <span id="viewTanggal"><i class="bi bi-calendar"></i> Tanggal</span>
+                  </p>
+                  <div id="viewIsi" class="prose prose-sm text-slate-600 whitespace-pre-wrap"></div>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <div id="modalKirimMenfess" class="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl transform scale-100 transition-all">
+        <h3 class="text-xl font-bold text-slate-800 mb-1">Kirim Menfess</h3>
+        <p class="text-xs text-slate-400 mb-4">Pesan akan dimoderasi sebelum tampil.</p>
+        
+        <form id="formMenfess" onsubmit="submitMenfess(event)" class="space-y-3">
+            <input type="text" name="pengirim" placeholder="Dari (Boleh nama samaran)" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm" required>
+            <input type="text" name="untuk" placeholder="Untuk Siapa?" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm" required>
+            <textarea name="pesan" rows="3" placeholder="Tulis pesan rahasiamu..." class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm" required></textarea>
+            
+            <div class="flex gap-2 mb-2">
+                <p class="text-xs text-slate-400 w-full mb-1">Pilih Warna Kartu:</p>
+            </div>
+            <div class="flex gap-3 mb-4">
+                <label class="cursor-pointer"><input type="radio" name="warna" value="bg-yellow-100" class="peer hidden" checked><div class="w-8 h-8 rounded-full bg-yellow-200 border-2 border-transparent peer-checked:border-slate-400"></div></label>
+                <label class="cursor-pointer"><input type="radio" name="warna" value="bg-blue-100" class="peer hidden"><div class="w-8 h-8 rounded-full bg-blue-200 border-2 border-transparent peer-checked:border-slate-400"></div></label>
+                <label class="cursor-pointer"><input type="radio" name="warna" value="bg-pink-100" class="peer hidden"><div class="w-8 h-8 rounded-full bg-pink-200 border-2 border-transparent peer-checked:border-slate-400"></div></label>
+                <label class="cursor-pointer"><input type="radio" name="warna" value="bg-green-100" class="peer hidden"><div class="w-8 h-8 rounded-full bg-green-200 border-2 border-transparent peer-checked:border-slate-400"></div></label>
+            </div>
+
+            <div class="flex gap-3">
+                <button type="button" onclick="toggleModal('modalKirimMenfess')" class="flex-1 py-2 rounded-lg bg-slate-100 text-slate-600 text-sm font-bold">Batal</button>
+                <button type="submit" id="btnKirimMenfess" class="flex-1 py-2 rounded-lg bg-pink-600 text-white text-sm font-bold hover:bg-pink-700 transition">Kirim!</button>
+            </div>
+        </form>
+    </div>
+  </div>
+
+  <div id="modalLaporBarang" class="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+        <h3 class="text-xl font-bold text-slate-800 mb-1">Lapor Barang</h3>
+        <p class="text-xs text-slate-400 mb-4">Barang Hilang atau Menemukan Barang?</p>
+        
+        <form id="formLF" onsubmit="submitLostFound(event)" class="space-y-3">
+            <select name="jenis" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm font-bold text-slate-700">
+                <option value="KEHILANGAN">Saya KEHILANGAN Barang</option>
+                <option value="DITEMUKAN">Saya MENEMUKAN Barang</option>
+            </select>
+            <input type="text" name="nama_barang" placeholder="Nama Barang (Cth: Botol Tupperware)" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm" required>
+            <input type="text" name="kontak" placeholder="No. HP / WA (Untuk dihubungi)" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm" required>
+            <textarea name="deskripsi" rows="2" placeholder="Ciri-ciri detail..." class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm" required></textarea>
+            
+            <div class="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center relative hover:bg-slate-50 transition">
+                <input type="file" id="fotoBarang" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" required onchange="previewImage(this)">
+                <div id="previewContainer">
+                    <i class="bi bi-camera text-2xl text-slate-300"></i>
+                    <p class="text-xs text-slate-400 mt-1">Upload Foto Barang</p>
+                </div>
+                <img id="imgPreview" class="hidden h-32 mx-auto object-cover rounded-lg mt-2">
+            </div>
+
+            <div class="flex gap-3 pt-2">
+                <button type="button" onclick="toggleModal('modalLaporBarang')" class="flex-1 py-2 rounded-lg bg-slate-100 text-slate-600 text-sm font-bold">Batal</button>
+                <button type="submit" id="btnKirimLF" class="flex-1 py-2 rounded-lg bg-slate-800 text-white text-sm font-bold hover:bg-slate-900 transition">Lapor</button>
+            </div>
+        </form>
+    </div>
+  </div>
+
+  <script>
+    // URL Backend GAS
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbx693z5rUDTuE8_GrkvSeXOwt60OzIBSgQ64aMr20V00iUQz_wylG8JfMWprcfV3xOHjw/exec"; 
+
+    // STATE
+    let NEWS_DATA = [];
+    let CURRENT_TAB = 'BERITA';
+
+    // --- INIT ---
+    window.onload = () => {
+        loadNews(); // Load default tab
+    };
+
+    // --- TAB SYSTEM ---
+    function switchTab(tabName) {
+        CURRENT_TAB = tabName;
+        // Update Buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+        
+        // Hide All Sections
+        document.getElementById('section-BERITA').classList.add('hidden');
+        document.getElementById('section-MENFESS').classList.add('hidden');
+        document.getElementById('section-LOSTFOUND').classList.add('hidden');
+        
+        // Show Selected & Load Data if needed
+        const targetSection = document.getElementById(`section-${tabName}`);
+        targetSection.classList.remove('hidden');
+        
+        if(tabName === 'MENFESS') loadMenfess();
+        if(tabName === 'LOSTFOUND') loadLostFound();
+    }
+
+    // --- MODAL SYSTEM ---
+    function toggleModal(id) {
+        const el = document.getElementById(id);
+        el.classList.toggle('hidden');
+    }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    // ==========================================
+    // 1. LOGIC BERITA
+    // ==========================================
+    async function loadNews() {
+        // Logic sama seperti sebelumnya, disederhanakan
+        const c = document.getElementById('newsContainer');
+        try {
+            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'get_mading_public' })});
+            const json = await res.json();
+            if(json.success) {
+                NEWS_DATA = json.data;
+                filterNews('SEMUA');
+            } else {
+                c.innerHTML = `<div class="text-center py-10"><p>Belum ada berita.</p></div>`;
+            }
+        } catch(e) { console.log(e); }
+    }
+
+    function filterNews(cat) {
+        // Update style button filter
+        const filtered = (cat === 'SEMUA') ? NEWS_DATA : NEWS_DATA.filter(i => i.kategori === cat);
+        renderNews(filtered);
+    }
+
+    function searchNews(q) {
+        const filtered = NEWS_DATA.filter(i => i.judul.toLowerCase().includes(q.toLowerCase()));
+        renderNews(filtered);
+    }
+
+    function renderNews(data) {
+        const c = document.getElementById('newsContainer');
+        if(data.length === 0) { c.innerHTML = '<p class="text-center text-slate-400 py-10">Tidak ditemukan.</p>'; return; }
+        
+        let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-6">';
+        data.forEach(item => {
+            let badge = item.kategori === 'Opini' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700';
+            html += `
+            <div onclick="openBerita(${item.id})" class="bg-white rounded-2xl border border-slate-100 overflow-hidden cursor-pointer hover:shadow-xl transition group">
+                <div class="h-48 overflow-hidden relative">
+                    <img src="${item.foto_url}=s500" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                    <span class="absolute top-3 left-3 text-[10px] font-bold px-2 py-1 rounded ${badge}">${item.kategori}</span>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-bold text-slate-800 text-lg leading-snug line-clamp-2 group-hover:text-red-600 transition">${item.judul}</h3>
+                    <div class="mt-4 flex justify-between text-xs text-slate-400 border-t pt-3 border-slate-50">
+                        <span><i class="bi bi-person-fill"></i> ${item.penulis}</span>
+                        <span>${new Date(item.created_at).toLocaleDateString('id')}</span>
+                    </div>
+                </div>
+            </div>`;
+        });
+        html += '</div>';
+        c.innerHTML = html;
+    }
+
+    function openBerita(id) {
+        const item = NEWS_DATA.find(i => i.id === id);
+        document.getElementById('viewFoto').src = item.foto_url;
+        document.getElementById('viewKategori').innerText = item.kategori;
+        document.getElementById('viewJudul').innerText = item.judul;
+        document.getElementById('viewPenulis').innerText = item.penulis;
+        document.getElementById('viewTanggal').innerText = new Date(item.created_at).toLocaleDateString();
+        document.getElementById('viewIsi').innerText = item.isi_berita;
+        toggleModal('modalBerita');
+    }
+
+    // ==========================================
+    // 2. LOGIC MENFESS
+    // ==========================================
+    async function loadMenfess() {
+        const c = document.getElementById('menfessContainer');
+        // Loading state handled in HTML init
+        try {
+            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'get_menfess_public' })});
+            const json = await res.json();
+            
+            if(!json.success || json.data.length === 0) {
+                c.innerHTML = `<div class="col-span-full text-center py-10 border-2 border-dashed border-slate-200 rounded-xl"><p class="text-slate-400">Belum ada pesan rahasia.</p></div>`;
+                return;
+            }
+
+            let html = '';
+            json.data.forEach((item, index) => {
+                // Rotasi acak sedikit biar kayak tempelan asli
+                const rotation = (index % 2 === 0) ? '-rotate-1' : 'rotate-1';
+                html += `
+                <div class="p-5 rounded-tr-3xl rounded-bl-3xl shadow-sm hover:shadow-lg transition transform hover:-translate-y-1 ${rotation} ${item.warna_bg} flex flex-col min-h-[180px]">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[10px] font-bold uppercase tracking-widest opacity-50">To: ${item.untuk}</span>
+                        <i class="bi bi-pin-angle-fill text-black/10 text-xl"></i>
+                    </div>
+                    <p class="font-hand text-xl leading-snug text-slate-800 flex-1 break-words">"${item.pesan}"</p>
+                    <div class="mt-4 text-right">
+                        <span class="text-xs font-bold text-slate-700 block">- ${item.pengirim}</span>
+                        <span class="text-[10px] text-slate-500">${new Date(item.created_at).toLocaleDateString()}</span>
+                    </div>
+                </div>`;
+            });
+            c.innerHTML = html;
+
+        } catch(e) { c.innerHTML = '<p>Gagal memuat.</p>'; }
+    }
+
+    async function submitMenfess(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnKirimMenfess');
+        const form = document.getElementById('formMenfess');
+        
+        btn.innerText = 'Mengirim...'; btn.disabled = true;
+
+        const data = {
+            action: 'upload_menfess',
+            pengirim: form.pengirim.value,
+            untuk: form.untuk.value,
+            pesan: form.pesan.value,
+            warna_bg: form.querySelector('input[name="warna"]:checked').value
+        };
+
+        try {
+            await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(data) });
+            alert('Terkirim! Pesanmu akan tampil setelah di-approve admin.');
+            toggleModal('modalKirimMenfess');
+            form.reset();
+        } catch(err) { alert('Gagal mengirim.'); }
+        
+        btn.innerText = 'Kirim!'; btn.disabled = false;
+    }
+
+    // ==========================================
+    // 3. LOGIC LOST & FOUND
+    // ==========================================
+    async function loadLostFound() {
+        const c = document.getElementById('lfContainer');
+        try {
+            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'get_lostfound_public' })});
+            const json = await res.json();
+            
+            if(!json.success || json.data.length === 0) {
+                c.innerHTML = `<div class="col-span-full text-center py-10"><p class="text-slate-400">Tidak ada barang hilang/ditemukan.</p></div>`;
+                return;
+            }
+
+            let html = '';
+            json.data.forEach(item => {
+                const badgeColor = item.jenis === 'KEHILANGAN' ? 'bg-red-600' : 'bg-green-600';
+                html += `
+                <div class="bg-white rounded-xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-md transition">
+                    <div class="h-40 overflow-hidden relative bg-slate-100">
+                        <img src="${item.foto_url}=s400" class="w-full h-full object-cover">
+                        <span class="absolute top-2 right-2 text-[10px] font-bold text-white px-2 py-1 rounded shadow ${badgeColor}">${item.jenis}</span>
+                    </div>
+                    <div class="p-4">
+                        <h4 class="font-bold text-slate-800 line-clamp-1">${item.nama_barang}</h4>
+                        <p class="text-xs text-slate-500 mt-1 line-clamp-2">${item.deskripsi}</p>
+                        <div class="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-600"><i class="bi bi-telephone"></i> Hubungi</span>
+                            <a href="https://wa.me/${item.kontak}" target="_blank" class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded hover:bg-green-200">Chat WA</a>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            c.innerHTML = html;
+        } catch(e) { c.innerHTML = '<p>Gagal memuat.</p>'; }
+    }
+
+    // Helper Image Preview
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('imgPreview').src = e.target.result;
+                document.getElementById('imgPreview').classList.remove('hidden');
+                document.getElementById('previewContainer').classList.add('hidden');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    async function submitLostFound(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnKirimLF');
+        const form = document.getElementById('formLF');
+        const fileInput = document.getElementById('fotoBarang');
+        
+        if(fileInput.files.length === 0) { alert('Wajib upload foto!'); return; }
+        
+        btn.innerText = 'Mengirim...'; btn.disabled = true;
+
+        // Convert File to Base64
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async function() {
+            const base64Raw = reader.result.split(',')[1]; // Ambil data setelah koma
+            
+            const data = {
+                action: 'upload_lostfound',
+                jenis: form.jenis.value,
+                nama_barang: form.nama_barang.value,
+                kontak: form.kontak.value,
+                deskripsi: form.deskripsi.value,
+                foto_base64: base64Raw,
+                foto_name: file.name,
+                foto_mime: file.type
+            };
+
+            try {
+                await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(data) });
+                alert('Laporan berhasil dikirim!');
+                toggleModal('modalLaporBarang');
+                form.reset();
+                document.getElementById('imgPreview').classList.add('hidden');
+                document.getElementById('previewContainer').classList.remove('hidden');
+                loadLostFound(); // Refresh grid
+            } catch(err) { alert('Gagal mengirim laporan.'); }
+            
+            btn.innerText = 'Lapor'; btn.disabled = false;
+        };
+    }
+  </script>
+</body>
+</html>
