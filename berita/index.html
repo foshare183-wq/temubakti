@@ -200,75 +200,86 @@
   </div>
 
 
- <script>
-    // URL Backend GAS Anda
+<script>
+    // --- KONFIGURASI ---
     const GAS_URL = "https://script.google.com/macros/s/AKfycbx693z5rUDTuE8_GrkvSeXOwt60OzIBSgQ64aMr20V00iUQz_wylG8JfMWprcfV3xOHjw/exec"; 
+    const SB_URL = 'https://twzdeiwqjqruhmlkphge.supabase.co'; 
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3emRlaXdxanFydWhtbGtwaGdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0MjU3NTYsImV4cCI6MjA4MTAwMTc1Nn0.d-yPuRMGq79Y5HlGh_5ASgV1hgoxTkQUMCYIWP6YeGc';
 
-    // DATA STATE
+    const SB_HEADERS = {
+        "apikey": SB_KEY,
+        "Authorization": "Bearer " + SB_KEY,
+        "Content-Type": "application/json"
+    };
+
     let ALL_NEWS = [];
     let ALL_MENFESS = [];
     let IS_LOADING_MENFESS = false;
 
-    // INIT
+    // --- INIT ---
     window.onload = () => {
         loadData();
     };
 
     async function loadData() {
-        loadMenfess(); // Load Menfess
-        loadNews();    // Load Berita
+        Promise.all([loadMenfessDirect(), loadNewsDirect()]);
     }
 
     function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
     // ==========================================
-    // 1. LOGIC MENFESS (DENGAN REFRESH & EMOJI)
+    // 1. DATA LOADING
     // ==========================================
-    
-    // Fitur Refresh Manual (Aman untuk 1000 user)
-    async function refreshMenfess() {
-        if(IS_LOADING_MENFESS) return; // Cegah spam klik
-        
-        const btnIcon = document.getElementById('iconRefresh');
-        btnIcon.classList.add('animate-spin'); // Efek putar
-        
-        await loadMenfess();
-        
-        setTimeout(() => btnIcon.classList.remove('animate-spin'), 1000); // Stop putar
+    async function loadNewsDirect() {
+        const c = document.getElementById('newsContainer');
+        try {
+            const res = await fetch(`${SB_URL}/rest/v1/berita_pmi?status=eq.PUBLISHED&select=*&order=created_at.desc`, { headers: SB_HEADERS });
+            const data = await res.json();
+            if(data.length > 0) { ALL_NEWS = data; filterNews('SEMUA'); }
+            else { c.innerHTML = `<div class="text-center py-20 text-slate-400">Belum ada berita.</div>`; }
+        } catch(e) { console.error(e); }
     }
 
-    async function loadMenfess() {
+    async function refreshMenfess() {
+        if(IS_LOADING_MENFESS) return;
+        const btnIcon = document.getElementById('iconRefresh');
+        btnIcon.classList.add('animate-spin');
+        await loadMenfessDirect();
+        setTimeout(() => btnIcon.classList.remove('animate-spin'), 1000);
+    }
+
+    async function loadMenfessDirect() {
         IS_LOADING_MENFESS = true;
         const c = document.getElementById('menfessPreview');
-        
-        // Hanya tampilkan loading jika data kosong (awal buka)
         if(ALL_MENFESS.length === 0) c.innerHTML = '<div class="loader mx-auto col-span-full"></div>';
 
         try {
-            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'get_menfess_public' })});
-            const json = await res.json();
+            const res = await fetch(`${SB_URL}/rest/v1/menfess_pmi?status=eq.PUBLISHED&select=*&order=created_at.desc`, { headers: SB_HEADERS });
+            const data = await res.json();
             
-            if(json.success && json.data.length > 0) {
-                ALL_MENFESS = json.data;
-                renderMenfessGrid(c, ALL_MENFESS.slice(0, 4)); // Tampilkan 4 terbaru
+            if(data.length > 0) {
+                ALL_MENFESS = data;
+                renderMenfessGrid(c, ALL_MENFESS.slice(0, 4)); // Render Depan
+                
+                // Jika modal sedang terbuka, update juga isinya biar realtime
+                const modalContainer = document.getElementById('allMenfessContainer');
+                if(!document.getElementById('modalAllMenfess').classList.contains('hidden')) {
+                    renderMenfessGrid(modalContainer, ALL_MENFESS);
+                }
             } else {
                 c.innerHTML = `<div class="col-span-full text-center py-10 opacity-50"><p>Belum ada surat masuk.</p></div>`;
             }
-        } catch(e) { 
-            console.log(e); 
-        } finally {
-            IS_LOADING_MENFESS = false;
-        }
+        } catch(e) { console.error(e); } finally { IS_LOADING_MENFESS = false; }
     }
 
+    // ==========================================
+    // 2. LOGIC REAKSI (SINGLE CHOICE & SYNC)
+    // ==========================================
     const EMOJI_MAP = [
-        { icon: '👍🏻', col: 'r_thumb' },
-        { icon: '❤️', col: 'r_love' },
-        { icon: '😂', col: 'r_laugh' },
-        { icon: '😱', col: 'r_shock' },
-        { icon: '🙏🏻', col: 'r_pray' },
-        { icon: '🔥', col: 'r_fire' }
+        { icon: '👍🏻', col: 'r_thumb' }, { icon: '❤️', col: 'r_love' },
+        { icon: '😂', col: 'r_laugh' }, { icon: '😱', col: 'r_shock' },
+        { icon: '🙏🏻', col: 'r_pray' }, { icon: '🔥', col: 'r_fire' }
     ];
 
     function renderMenfessGrid(container, data) {
@@ -276,41 +287,36 @@
         data.forEach((item, index) => {
             const rotation = (index % 2 === 0) ? '-rotate-1' : 'rotate-1';
             
-            // Generate HTML untuk 6 Emoji Buttons
+            // Ambil pilihan user saat ini untuk pesan ini
+            const myChoice = localStorage.getItem(`reaction_${item.id}`); // Ex: 'r_love'
+
             let reactionHtml = '';
             EMOJI_MAP.forEach(em => {
-                // Cek LocalStorage: Apakah user ini sudah klik emoji ini di surat ini?
-                const storageKey = `liked_${item.id}_${em.col}`;
-                const isClicked = localStorage.getItem(storageKey);
-                const activeClass = isClicked ? 'grayscale-0 scale-110 opacity-100' : 'grayscale opacity-60 hover:opacity-100 hover:scale-110';
-                
-                // Ambil jumlah like dari database, kalau null/0 jadi kosong stringnya biar rapi
+                const isSelected = (myChoice === em.col);
+                const activeClass = isSelected ? 'scale-125 opacity-100 grayscale-0' : 'grayscale opacity-50 hover:opacity-100 hover:scale-110';
                 const count = item[em.col] > 0 ? item[em.col] : ''; 
 
+                // Kita kasih ID class unik biar bisa di-update massal (js-react-{id}-{type})
                 reactionHtml += `
-                <button onclick="sendReaction(this, ${item.id}, '${em.col}')" 
-                    class="flex flex-col items-center justify-center transition transform duration-200 ${activeClass}">
+                <button onclick="handleReaction(${item.id}, '${em.col}')" 
+                    class="js-react-${item.id}-${em.col} flex flex-col items-center justify-center transition transform duration-200 ${activeClass}">
                     <span class="text-lg">${em.icon}</span>
                     <span class="text-[10px] font-bold text-slate-600 h-3 leading-none count-label">${count}</span>
-                </button>
-                `;
+                </button>`;
             });
 
             html += `
-            <div class="menfess-card relative p-5 rounded-3xl ${item.warna_bg} shadow-sm border border-black/5 flex flex-col h-full min-h-[240px] ${rotation} transition duration-300">
+            <div class="menfess-card relative p-5 rounded-3xl ${item.warna_bg} shadow-sm border border-black/5 flex flex-col h-full min-h-[240px] ${rotation}">
                 <div class="flex justify-between items-start mb-3 border-b border-black/10 pb-2">
                     <span class="text-[10px] font-bold uppercase tracking-widest text-slate-900/50">To: ${item.untuk}</span>
                     <i class="bi bi-pin-angle-fill text-slate-900/20 text-xl"></i>
                 </div>
-                
                 <p class="font-hand text-xl md:text-2xl leading-snug text-slate-800 flex-1 break-words mb-4">"${item.pesan}"</p>
-                
                 <div class="mt-auto">
                     <div class="flex justify-between items-end mb-3">
                         <span class="text-xs font-bold text-slate-700">- ${item.pengirim}</span>
                         <span class="text-[10px] text-slate-500/80">${new Date(item.created_at).toLocaleDateString()}</span>
                     </div>
-                    
                     <div class="flex justify-between items-end pt-2 border-t border-black/5 bg-white/30 rounded-xl p-2 backdrop-blur-sm">
                         ${reactionHtml}
                     </div>
@@ -320,86 +326,104 @@
         container.innerHTML = html;
     }
 
-    // Fungsi Kirim Reaksi (Optimistic UI)
-    async function sendReaction(btn, id, type) {
-        // 1. Cek dulu di localStorage biar gak spam 1 orang klik 100x
-        const storageKey = `liked_${id}_${type}`;
-        if(localStorage.getItem(storageKey)) return; // Kalau sudah klik, stop (gak bisa unlike biar database simple)
+    async function handleReaction(id, newType) {
+        const storageKey = `reaction_${id}`;
+        const oldType = localStorage.getItem(storageKey); // Apa yg dipilih sebelumnya?
 
-        // 2. Efek Visual Langsung (Biar terasa cepat di mata user)
-        btn.classList.remove('grayscale', 'opacity-60');
-        btn.classList.add('grayscale-0', 'scale-125', 'opacity-100');
-        setTimeout(() => btn.classList.remove('scale-125', 'scale-110'), 200); // Efek membal
-
-        // Tambah angka secara manual di layar
-        const label = btn.querySelector('.count-label');
-        let currentCount = parseInt(label.innerText) || 0;
-        label.innerText = currentCount + 1;
-
-        // 3. Simpan state di HP user
-        localStorage.setItem(storageKey, 'true');
-
-        // 4. Kirim ke Backend (Silent Background Process)
-        try {
-            await fetch(GAS_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ action: 'add_reaction', id: id, type: type }) 
-            });
-            // Tidak perlu alert sukses, biar user lanjut scrolling
-        } catch(e) {
-            console.error("Gagal kirim like");
+        // Skenario 1: Klik ikon yang SAMA (Berarti mau UNLIKE / Batal)
+        if (oldType === newType) {
+            localStorage.removeItem(storageKey);
+            updateVisualCount(id, oldType, -1, false); // Kurangi visual
+            await rpcSupabase('decrement_reaction', id, oldType); // Kurangi DB
+        } 
+        // Skenario 2: Belum pernah pilih (BARU)
+        else if (!oldType) {
+            localStorage.setItem(storageKey, newType);
+            updateVisualCount(id, newType, +1, true); // Tambah visual
+            await rpcSupabase('increment_reaction', id, newType); // Tambah DB
+        } 
+        // Skenario 3: Ganti Pilihan (Misal dari Love ke Laugh)
+        else {
+            localStorage.setItem(storageKey, newType);
+            
+            // Hapus yang lama
+            updateVisualCount(id, oldType, -1, false);
+            await rpcSupabase('decrement_reaction', id, oldType);
+            
+            // Tambah yang baru
+            updateVisualCount(id, newType, +1, true);
+            await rpcSupabase('increment_reaction', id, newType);
         }
     }
-    function openAllMenfess() {
-        const c = document.getElementById('allMenfessContainer');
-        // Render semua data yg sudah diload
-        renderMenfessGrid(c, ALL_MENFESS);
-        toggleModal('modalAllMenfess');
+
+    // Fungsi Update Tampilan di SEMUA tempat (Depan & Modal) secara bersamaan
+    function updateVisualCount(id, type, delta, isActive) {
+        // Cari semua tombol yang ID dan Tipe-nya cocok (bisa ada 2: di depan & di modal)
+        const buttons = document.querySelectorAll(`.js-react-${id}-${type}`);
+        
+        buttons.forEach(btn => {
+            // Update Style
+            if(isActive) {
+                btn.classList.remove('grayscale', 'opacity-50');
+                btn.classList.add('scale-125', 'opacity-100', 'grayscale-0');
+            } else {
+                btn.classList.add('grayscale', 'opacity-50');
+                btn.classList.remove('scale-125', 'opacity-100', 'grayscale-0');
+            }
+
+            // Update Angka
+            const label = btn.querySelector('.count-label');
+            let current = parseInt(label.innerText) || 0;
+            let next = current + delta;
+            label.innerText = (next > 0) ? next : '';
+        });
     }
 
+    // Wrapper Request Supabase
+    async function rpcSupabase(funcName, id, col) {
+        try {
+            await fetch(`${SB_URL}/rest/v1/rpc/${funcName}`, {
+                method: 'POST',
+                headers: SB_HEADERS,
+                body: JSON.stringify({ row_id: id, col_name: col })
+            });
+        } catch(e) { console.error("RPC Error", e); }
+    }
+
+    // ==========================================
+    // 3. LAIN-LAIN
+    // ==========================================
     async function submitMenfess(e) {
         e.preventDefault();
         const btn = document.getElementById('btnKirimMenfess');
         const form = document.getElementById('formMenfess');
-        
         btn.innerText = 'Mengirim...'; btn.disabled = true;
 
-        const data = {
-            action: 'upload_menfess',
-            pengirim: form.pengirim.value,
-            untuk: form.untuk.value,
-            pesan: form.pesan.value,
-            warna_bg: form.querySelector('input[name="warna"]:checked').value
-        };
-
         try {
-            await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(data) });
+            await fetch(GAS_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({
+                    action: 'upload_menfess',
+                    pengirim: form.pengirim.value,
+                    untuk: form.untuk.value,
+                    pesan: form.pesan.value,
+                    warna_bg: form.querySelector('input[name="warna"]:checked').value
+                }) 
+            });
             alert('Pesanmu terkirim ke Redaksi!');
             toggleModal('modalKirimMenfess');
             form.reset();
-            refreshMenfess(); // Auto refresh setelah kirim
         } catch(err) { alert('Gagal mengirim.'); }
-        
         btn.innerText = 'Kirim Pesan!'; btn.disabled = false;
     }
 
-    // ==========================================
-    // 2. LOGIC BERITA (SAMA SEPERTI SEBELUMNYA)
-    // ==========================================
-    async function loadNews() {
-        const c = document.getElementById('newsContainer');
-        try {
-            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'get_mading_public' })});
-            const json = await res.json();
-            if(json.success) {
-                ALL_NEWS = json.data;
-                filterNews('SEMUA');
-            } else {
-                c.innerHTML = `<div class="text-center py-20 text-slate-400">Belum ada berita.</div>`;
-            }
-        } catch(e) { console.log(e); }
+    function openAllMenfess() {
+        const c = document.getElementById('allMenfessContainer');
+        renderMenfessGrid(c, ALL_MENFESS);
+        toggleModal('modalAllMenfess');
     }
 
+    // Helper Berita... (Sama seperti sebelumnya)
     function filterNews(cat) {
         document.querySelectorAll('.filter-btn').forEach(b => {
             b.classList.remove('bg-red-600', 'text-white', 'border-red-600');
