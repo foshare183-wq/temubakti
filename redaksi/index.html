@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Dapur Redaksi & Moderasi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Patrick+Hand&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  
+  <script>
+    tailwind.config = { 
+        theme: { 
+            extend: { 
+                fontFamily: { 
+                    sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    hand: ['"Patrick Hand"', 'cursive']
+                } 
+            } 
+        } 
+    }
+  </script>
+  <style>
+    body { background-color: #f1f5f9; }
+    .glass-nav { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #e2e8f0; }
+    .loader { border: 3px solid #cbd5e1; border-top: 3px solid #0f172a; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    /* Toggle Switch Style */
+    .mode-btn.active { background-color: #0f172a; color: white; border-color: #0f172a; }
+    .mode-btn { background-color: white; color: #64748b; border: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body class="text-slate-800 font-sans min-h-screen pb-20">
+
+  <div id="loginOverlay" class="fixed inset-0 z-[100] bg-slate-900 flex flex-col items-center justify-center p-6">
+      <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center">
+          <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-800"><i class="bi bi-shield-lock-fill text-3xl"></i></div>
+          <h2 class="text-xl font-extrabold mb-1 text-slate-900">RESTRICTED AREA</h2>
+          <p class="text-slate-400 text-xs mb-6">Masukkan PIN Redaksi untuk masuk.</p>
+          <input type="password" id="pinInput" class="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-center text-lg font-bold mb-4 outline-none focus:ring-2 focus:ring-slate-500 transition" placeholder="PIN" maxlength="6">
+          <button onclick="checkPin()" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-black transition shadow-lg shadow-slate-900/20">BUKA DASHBOARD</button>
+      </div>
+  </div>
+
+  <div id="mainDashboard" class="hidden animate-fade-in">
+      
+      <nav class="fixed top-0 inset-x-0 z-40 glass-nav px-4 py-3 shadow-sm">
+          <div class="flex justify-between items-center mb-3">
+              <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center text-white font-bold"><i class="bi bi-ui-checks-grid"></i></div>
+                  <div>
+                      <h1 class="font-bold text-sm leading-none">PANEL REDAKSI</h1>
+                      <p class="text-[10px] text-slate-500 font-semibold">Admin Mode</p>
+                  </div>
+              </div>
+              <button onclick="refreshData()" class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-200 transition"><i class="bi bi-arrow-clockwise" id="btnRefreshIcon"></i></button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+              <button onclick="switchMode('BERITA')" id="mode-BERITA" class="mode-btn active py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2"><i class="bi bi-newspaper"></i> BERITA</button>
+              <button onclick="switchMode('MENFESS')" id="mode-MENFESS" class="mode-btn py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2"><i class="bi bi-envelope-paper-heart"></i> MENFESS</button>
+          </div>
+      </nav>
+
+      <div class="pt-32 px-4">
+          
+          <div class="flex p-1 bg-white border border-slate-200 rounded-xl mb-6 sticky top-28 z-30 shadow-sm">
+              <button onclick="filterStatus('DRAFT')" id="tab-DRAFT" class="flex-1 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition bg-slate-800 text-white shadow">PENDING</button>
+              <button onclick="filterStatus('PUBLISHED')" id="tab-PUBLISHED" class="flex-1 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition text-slate-500 hover:text-slate-800">TAYANG</button>
+              <button onclick="filterStatus('REJECTED')" id="tab-REJECTED" class="flex-1 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition text-slate-500 hover:text-slate-800">DITOLAK</button>
+          </div>
+
+          <div id="contentList" class="space-y-4 min-h-[50vh]">
+              <div class="text-center py-20"><div class="loader mx-auto"></div></div>
+          </div>
+
+      </div>
+  </div>
+
+  <div id="modalEdit" class="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-sm hidden flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto relative">
+          <button onclick="closeEdit()" class="absolute top-4 right-4 text-slate-400 hover:text-red-500"><i class="bi bi-x-lg text-xl"></i></button>
+          <h3 class="font-bold text-lg mb-6 flex items-center gap-2"><i class="bi bi-pencil-square text-blue-600"></i> Edit Konten Berita</h3>
+          <input type="hidden" id="editId">
+          <div class="space-y-4">
+              <div>
+                  <label class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Judul Headline</label>
+                  <input type="text" id="editJudul" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none">
+              </div>
+              <div>
+                  <label class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Kategori</label>
+                  <select id="editKategori" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-semibold outline-none">
+                      <option value="Berita">Berita</option><option value="Opini">Opini</option><option value="Profil">Profil</option><option value="Sastra">Sastra</option>
+                  </select>
+              </div>
+              <div>
+                  <label class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Isi Berita</label>
+                  <textarea id="editIsi" rows="8" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm leading-relaxed resize-none focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+              </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3 mt-8">
+              <button onclick="closeEdit()" class="py-3 bg-slate-100 text-slate-600 font-bold rounded-xl text-sm hover:bg-slate-200 transition">BATAL</button>
+              <button onclick="saveEdit()" class="py-3 bg-blue-600 text-white font-bold rounded-xl text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-600/30">SIMPAN PERUBAHAN</button>
+          </div>
+      </div>
+  </div>
+
+  <script>
+    // --- CONFIG ---
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbx693z5rUDTuE8_GrkvSeXOwt60OzIBSgQ64aMr20V00iUQz_wylG8JfMWprcfV3xOHjw/exec"; // PASTE URL GAS ANDA DISINI
+    const SECRET_PIN = "2026"; 
+
+    // STATE
+    let DATA_BERITA = [];
+    let DATA_MENFESS = [];
+    
+    let CURRENT_MODE = 'BERITA'; // 'BERITA' or 'MENFESS'
+    let CURRENT_TAB = 'DRAFT'; // 'DRAFT' (Pending), 'PUBLISHED', 'REJECTED'
+
+    // ==========================================
+    // 1. AUTH & INIT
+    // ==========================================
+    function checkPin() {
+        const input = document.getElementById('pinInput').value;
+        if(input === SECRET_PIN) {
+            document.getElementById('loginOverlay').classList.add('hidden');
+            document.getElementById('mainDashboard').classList.remove('hidden');
+            loadAllData();
+        } else {
+            alert("PIN Salah!");
+            document.getElementById('pinInput').value = '';
+        }
+    }
+
+    // ==========================================
+    // 2. DATA HANDLING
+    // ==========================================
+    async function loadAllData() {
+        const c = document.getElementById('contentList');
+        const icon = document.getElementById('btnRefreshIcon');
+        
+        c.innerHTML = '<div class="text-center py-20"><div class="loader mx-auto"></div><p class="text-xs text-slate-400 mt-3 font-bold animate-pulse">Sinkronisasi Database...</p></div>';
+        icon.classList.add('animate-spin');
+
+        try {
+            // Fetch Berita & Menfess Paralel biar cepat
+            const [resBerita, resMenfess] = await Promise.all([
+                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'get_berita_admin' }) }),
+                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'get_menfess_admin' }) })
+            ]);
+
+            const jsonBerita = await resBerita.json();
+            const jsonMenfess = await resMenfess.json();
+
+            if(jsonBerita.success) DATA_BERITA = jsonBerita.data;
+            if(jsonMenfess.success) DATA_MENFESS = jsonMenfess.data;
+
+            renderList();
+
+        } catch (e) {
+            c.innerHTML = `<p class="text-center text-red-500 font-bold">Gagal memuat data. Periksa koneksi.</p>`;
+        } finally {
+            icon.classList.remove('animate-spin');
+        }
+    }
+
+    function refreshData() { loadAllData(); }
+
+    // ==========================================
+    // 3. UI SWITCHER LOGIC
+    // ==========================================
+    function switchMode(mode) {
+        CURRENT_MODE = mode;
+        // Update Button Style
+        document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('mode-'+mode).classList.add('active');
+        
+        // Reset Filter ke Pending setiap ganti mode biar fokus kerja
+        filterStatus('DRAFT'); 
+    }
+
+    function filterStatus(status) {
+        CURRENT_TAB = status;
+        
+        // Update Sub-Tab Style
+        ['DRAFT', 'PUBLISHED', 'REJECTED'].forEach(s => {
+            const btn = document.getElementById('tab-'+s);
+            if(s === status) {
+                btn.className = "flex-1 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition bg-slate-800 text-white shadow";
+            } else {
+                btn.className = "flex-1 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition text-slate-500 hover:text-slate-800";
+            }
+        });
+        
+        renderList();
+    }
+
+    function renderList() {
+        const c = document.getElementById('contentList');
+        
+        // Pilih Dataset sesuai Mode
+        let sourceData = (CURRENT_MODE === 'BERITA') ? DATA_BERITA : DATA_MENFESS;
+        
+        // Di Database Menfess status pending itu 'PENDING', di Berita 'DRAFT'. Kita samakan logic filter UI nya.
+        // UI: DRAFT | PUBLISHED | REJECTED
+        // DB Menfess: PENDING | PUBLISHED | REJECTED
+        // DB Berita: DRAFT | PUBLISHED | REJECTED
+        
+        let filterKey = CURRENT_TAB;
+        if(CURRENT_MODE === 'MENFESS' && CURRENT_TAB === 'DRAFT') filterKey = 'PENDING'; // Mapping status
+
+        const filtered = sourceData.filter(item => item.status === filterKey);
+
+        if(filtered.length === 0) {
+            c.innerHTML = `<div class="text-center py-10 opacity-50"><i class="bi bi-inbox text-4xl mb-2 block"></i>Belum ada data ${CURRENT_TAB.toLowerCase()}.</div>`;
+            return;
+        }
+
+        let html = '';
+        if(CURRENT_MODE === 'BERITA') {
+            html = renderBeritaCards(filtered);
+        } else {
+            html = renderMenfessCards(filtered);
+        }
+        c.innerHTML = html;
+    }
+
+    // --- RENDER BERITA ---
+    function renderBeritaCards(data) {
+        let html = '';
+        data.forEach(item => {
+            let actions = '';
+            // Logic Tombol Berita
+            if(CURRENT_TAB === 'DRAFT') {
+                actions = `
+                <div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-slate-100">
+                    <button onclick="updateBerita(${item.id}, 'REJECTED')" class="py-2 rounded-lg bg-red-50 text-red-600 text-xs font-bold hover:bg-red-100 transition">TOLAK</button>
+                    <button onclick="updateBerita(${item.id}, 'PUBLISHED')" class="py-2 rounded-lg bg-green-50 text-green-600 text-xs font-bold hover:bg-green-100 transition">TAYANGKAN</button>
+                </div>`;
+            } else if (CURRENT_TAB === 'PUBLISHED') {
+                actions = `
+                <div class="mt-4 pt-4 border-t border-slate-100 text-center">
+                      <button onclick="updateBerita(${item.id}, 'DRAFT')" class="text-xs font-bold text-slate-400 hover:text-red-500 underline">Tarik Kembali ke Draft</button>
+                </div>`;
+            }
+
+            html += `
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 relative group hover:border-slate-300 transition">
+                <button onclick="openEdit(${item.id})" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition"><i class="bi bi-pencil-fill text-xs"></i></button>
+                
+                <div class="flex gap-4">
+                    <img src="${item.foto_url}" class="w-16 h-16 rounded-xl object-cover bg-slate-100 flex-none">
+                    <div class="min-w-0 pr-8">
+                        <span class="text-[10px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-wider">${item.kategori}</span>
+                        <h4 class="font-bold text-slate-900 leading-tight mt-1 mb-1 line-clamp-2">${item.judul}</h4>
+                        <p class="text-xs text-slate-400 font-semibold">${item.penulis}</p>
+                    </div>
+                </div>
+                ${actions}
+            </div>`;
+        });
+        return html;
+    }
+
+    // --- RENDER MENFESS ---
+    function renderMenfessCards(data) {
+        let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+        data.forEach(item => {
+            let actions = '';
+            // Logic Tombol Menfess
+            if(CURRENT_TAB === 'DRAFT') { // PENDING
+                actions = `
+                <div class="grid grid-cols-2 gap-2 mt-auto pt-3 border-t border-black/5">
+                    <button onclick="updateMenfess(${item.id}, 'REJECTED')" class="py-2 rounded-lg bg-white/50 hover:bg-red-500 hover:text-white text-red-600 text-xs font-bold transition shadow-sm">SAMPAH</button>
+                    <button onclick="updateMenfess(${item.id}, 'PUBLISHED')" class="py-2 rounded-lg bg-white/80 hover:bg-green-500 hover:text-white text-green-700 text-xs font-bold transition shadow-sm">TAYANG</button>
+                </div>`;
+            } else if (CURRENT_TAB === 'PUBLISHED') {
+                actions = `
+                <div class="mt-auto pt-3 border-t border-black/5 text-right">
+                     <button onclick="updateMenfess(${item.id}, 'REJECTED')" class="text-xs font-bold text-red-500 bg-white/50 px-3 py-1 rounded-full hover:bg-red-500 hover:text-white transition">Hapus / Batalkan</button>
+                </div>`;
+            }
+
+            html += `
+            <div class="p-5 rounded-3xl ${item.warna_bg} shadow-sm border border-black/5 flex flex-col min-h-[200px] relative">
+                <div class="flex justify-between items-start mb-2 opacity-60">
+                     <span class="text-[10px] font-bold uppercase">From: ${item.pengirim}</span>
+                     <span class="text-[10px] font-bold uppercase">To: ${item.untuk}</span>
+                </div>
+                <p class="font-hand text-xl text-slate-800 leading-snug mb-4">"${item.pesan}"</p>
+                ${actions}
+            </div>`;
+        });
+        html += '</div>';
+        return html;
+    }
+
+
+    // ==========================================
+    // 4. ACTION HANDLERS
+    // ==========================================
+    
+    // --- UPDATE STATUS BERITA ---
+    async function updateBerita(id, status) {
+        if(!confirm(`Ubah status berita jadi ${status}?`)) return;
+        
+        // Optimistic Update
+        DATA_BERITA = DATA_BERITA.filter(i => i.id !== id);
+        renderList(); // Re-render instant
+
+        try {
+            await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'update_status', id: id, status: status }) });
+        } catch(e) { alert("Gagal update server."); }
+    }
+
+    // --- UPDATE STATUS MENFESS ---
+    async function updateMenfess(id, status) {
+        // Tidak perlu confirm biar cepat moderasi banyak pesan
+        
+        // Optimistic Update
+        DATA_MENFESS = DATA_MENFESS.filter(i => i.id !== id);
+        renderList();
+
+        try {
+            await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'update_status_menfess', id: id, status: status }) });
+        } catch(e) { alert("Gagal update server."); }
+    }
+
+    // --- EDIT BERITA ---
+    function openEdit(id) {
+        const item = DATA_BERITA.find(i => i.id === id);
+        if(!item) return;
+        document.getElementById('editId').value = id;
+        document.getElementById('editJudul').value = item.judul;
+        document.getElementById('editKategori').value = item.kategori;
+        document.getElementById('editIsi').value = item.isi_berita;
+        document.getElementById('modalEdit').classList.remove('hidden');
+    }
+    function closeEdit() { document.getElementById('modalEdit').classList.add('hidden'); }
+
+    async function saveEdit() {
+        const id = document.getElementById('editId').value;
+        const judul = document.getElementById('editJudul').value;
+        const kat = document.getElementById('editKategori').value;
+        const isi = document.getElementById('editIsi').value;
+        
+        const btn = document.querySelector('#modalEdit button:last-child');
+        btn.innerText = "Processing..."; btn.disabled = true;
+
+        try {
+            await fetch(GAS_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: 'edit_text', id: id, judul: judul, kategori: kat, isi: isi }) 
+            });
+            
+            // Update Local Data
+            const idx = DATA_BERITA.findIndex(i => i.id == id);
+            if(idx !== -1) {
+                DATA_BERITA[idx].judul = judul;
+                DATA_BERITA[idx].kategori = kat;
+                DATA_BERITA[idx].isi_berita = isi;
+            }
+            closeEdit();
+            renderList();
+            alert("Berhasil diedit!");
+        } catch (e) { alert("Gagal."); } 
+        finally { btn.innerText = "SIMPAN PERUBAHAN"; btn.disabled = false; }
+    }
+  </script>
+</body>
+</html>
