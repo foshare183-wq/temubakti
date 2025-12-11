@@ -69,15 +69,21 @@
       </div>
 
       <div class="max-w-7xl mx-auto px-4 relative z-10">
-          <div class="flex justify-between items-end mb-8">
-              <div>
-                  <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight">💌 Papan Surat</h2>
-                  <p class="text-slate-500 mt-1">Pesan rahasia & salam-salam terbaru.</p>
-              </div>
-              <button onclick="openAllMenfess()" class="hidden sm:block text-sm font-bold text-red-600 hover:text-red-700 underline underline-offset-4 decoration-2">
-                  Lihat Semua Surat <i class="bi bi-arrow-right"></i>
-              </button>
-          </div>
+         <div class="flex justify-between items-end mb-8">
+    <div class="flex items-center gap-4">
+        <div>
+            <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight">💌 Papan Surat</h2>
+            <p class="text-slate-500 mt-1 text-sm">Pesan rahasia & salam-salam terbaru.</p>
+        </div>
+        <button onclick="refreshMenfess()" class="w-10 h-10 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 hover:text-blue-600 hover:border-blue-300 transition active:scale-95" title="Refresh Pesan">
+            <i class="bi bi-arrow-clockwise text-lg" id="iconRefresh"></i>
+        </button>
+    </div>
+    
+    <button onclick="openAllMenfess()" class="hidden sm:block text-sm font-bold text-red-600 hover:text-red-700 underline underline-offset-4 decoration-2">
+        Lihat Semua Surat <i class="bi bi-arrow-right"></i>
+    </button>
+</div>
 
           <div id="menfessPreview" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div class="loader mx-auto col-span-full"></div>
@@ -194,13 +200,14 @@
   </div>
 
 
-  <script>
-    // URL Backend GAS
+ <script>
+    // URL Backend GAS Anda
     const GAS_URL = "https://script.google.com/macros/s/AKfycbx693z5rUDTuE8_GrkvSeXOwt60OzIBSgQ64aMr20V00iUQz_wylG8JfMWprcfV3xOHjw/exec"; 
 
     // DATA STATE
     let ALL_NEWS = [];
     let ALL_MENFESS = [];
+    let IS_LOADING_MENFESS = false;
 
     // INIT
     window.onload = () => {
@@ -208,41 +215,63 @@
     };
 
     async function loadData() {
-        // Load Menfess & Berita Paralel
-        loadMenfess();
-        loadNews();
+        loadMenfess(); // Load Menfess
+        loadNews();    // Load Berita
     }
 
     function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
     // ==========================================
-    // 1. LOGIC MENFESS (DENGAN EMOJI)
+    // 1. LOGIC MENFESS (DENGAN REFRESH & EMOJI)
     // ==========================================
+    
+    // Fitur Refresh Manual (Aman untuk 1000 user)
+    async function refreshMenfess() {
+        if(IS_LOADING_MENFESS) return; // Cegah spam klik
+        
+        const btnIcon = document.getElementById('iconRefresh');
+        btnIcon.classList.add('animate-spin'); // Efek putar
+        
+        await loadMenfess();
+        
+        setTimeout(() => btnIcon.classList.remove('animate-spin'), 1000); // Stop putar
+    }
+
     async function loadMenfess() {
+        IS_LOADING_MENFESS = true;
         const c = document.getElementById('menfessPreview');
+        
+        // Hanya tampilkan loading jika data kosong (awal buka)
+        if(ALL_MENFESS.length === 0) c.innerHTML = '<div class="loader mx-auto col-span-full"></div>';
+
         try {
             const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'get_menfess_public' })});
             const json = await res.json();
             
             if(json.success && json.data.length > 0) {
                 ALL_MENFESS = json.data;
-                // Render Preview (Top 4)
-                renderMenfessGrid(c, ALL_MENFESS.slice(0, 4));
+                renderMenfessGrid(c, ALL_MENFESS.slice(0, 4)); // Tampilkan 4 terbaru
             } else {
                 c.innerHTML = `<div class="col-span-full text-center py-10 opacity-50"><p>Belum ada surat masuk.</p></div>`;
             }
-        } catch(e) { console.log(e); }
+        } catch(e) { 
+            console.log(e); 
+        } finally {
+            IS_LOADING_MENFESS = false;
+        }
     }
 
     function renderMenfessGrid(container, data) {
         let html = '';
         data.forEach((item, index) => {
-            // Rotasi acak
             const rotation = (index % 2 === 0) ? '-rotate-1' : 'rotate-1';
             
+            // Cek apakah user pernah like pesan ini (Disimpan di LocalStorage HP user)
+            const isLiked = localStorage.getItem('like_' + item.id) ? 'scale-125 grayscale-0' : 'grayscale opacity-50';
+
             html += `
-            <div class="menfess-card relative p-5 rounded-3xl ${item.warna_bg} shadow-sm border border-black/5 flex flex-col h-full min-h-[220px] ${rotation}">
+            <div class="menfess-card relative p-5 rounded-3xl ${item.warna_bg} shadow-sm border border-black/5 flex flex-col h-full min-h-[220px] ${rotation} transition duration-300">
                 <div class="flex justify-between items-start mb-3 border-b border-black/10 pb-2">
                     <span class="text-[10px] font-bold uppercase tracking-widest text-slate-900/50">To: ${item.untuk}</span>
                     <i class="bi bi-pin-angle-fill text-slate-900/20 text-xl"></i>
@@ -256,10 +285,8 @@
                         <span class="text-[10px] text-slate-500/80">${new Date(item.created_at).toLocaleDateString()}</span>
                     </div>
                     
-                    <div class="flex gap-2 mt-3 pt-2 border-t border-black/5 justify-end">
-                        <button onclick="react(this)" class="hover:scale-125 transition">❤️</button>
-                        <button onclick="react(this)" class="hover:scale-125 transition">😂</button>
-                        <button onclick="react(this)" class="hover:scale-125 transition">🔥</button>
+                    <div class="flex gap-3 mt-3 pt-2 border-t border-black/5 justify-end">
+                        <button onclick="react(this, ${item.id})" class="transition transform hover:scale-110 ${isLiked} text-lg">❤️</button>
                     </div>
                 </div>
             </div>`;
@@ -267,17 +294,29 @@
         container.innerHTML = html;
     }
 
-    function openAllMenfess() {
-        const c = document.getElementById('allMenfessContainer');
-        renderMenfessGrid(c, ALL_MENFESS);
-        toggleModal('modalAllMenfess');
+    // Fungsi Agar Emoji Bisa Diklik & Berubah
+    function react(btn, id) {
+        // Toggle visual
+        const isActive = btn.classList.contains('grayscale');
+        
+        if(isActive) {
+            // JADI LIKE
+            btn.classList.remove('grayscale', 'opacity-50');
+            btn.classList.add('scale-125', 'grayscale-0');
+            localStorage.setItem('like_' + id, 'true'); // Simpan di HP user
+        } else {
+            // UNLIKE
+            btn.classList.add('grayscale', 'opacity-50');
+            btn.classList.remove('scale-125', 'grayscale-0');
+            localStorage.removeItem('like_' + id);
+        }
     }
 
-    // Efek Click Emoji
-    function react(btn) {
-        btn.classList.add('scale-150');
-        setTimeout(() => btn.classList.remove('scale-150'), 200);
-        // Disini bisa tambah logic backend kalau mau save count
+    function openAllMenfess() {
+        const c = document.getElementById('allMenfessContainer');
+        // Render semua data yg sudah diload
+        renderMenfessGrid(c, ALL_MENFESS);
+        toggleModal('modalAllMenfess');
     }
 
     async function submitMenfess(e) {
@@ -300,13 +339,14 @@
             alert('Pesanmu terkirim ke Redaksi!');
             toggleModal('modalKirimMenfess');
             form.reset();
+            refreshMenfess(); // Auto refresh setelah kirim
         } catch(err) { alert('Gagal mengirim.'); }
         
         btn.innerText = 'Kirim Pesan!'; btn.disabled = false;
     }
 
     // ==========================================
-    // 2. LOGIC BERITA (HEADLINE BESAR)
+    // 2. LOGIC BERITA (SAMA SEPERTI SEBELUMNYA)
     // ==========================================
     async function loadNews() {
         const c = document.getElementById('newsContainer');
@@ -323,7 +363,6 @@
     }
 
     function filterNews(cat) {
-        // Update Style Filter Button
         document.querySelectorAll('.filter-btn').forEach(b => {
             b.classList.remove('bg-red-600', 'text-white', 'border-red-600');
             b.classList.add('border-slate-200', 'text-slate-500');
@@ -332,7 +371,6 @@
                 b.classList.add('bg-red-600', 'text-white', 'border-red-600');
             }
         });
-
         const filtered = (cat === 'SEMUA') ? ALL_NEWS : ALL_NEWS.filter(i => i.kategori === cat);
         renderNews(filtered);
     }
@@ -342,16 +380,11 @@
         if(data.length === 0) { c.innerHTML = '<p class="text-center py-10">Tidak ditemukan.</p>'; return; }
         
         let html = '';
-        
-        // JIKA ADA DATA, ITEM PERTAMA JADI HEADLINE
-        // Tapi hanya jika filter = SEMUA, kalau filter kategori biasa saja layoutnya
-        const isHeadlineMode = (data === ALL_NEWS); // Atau logika lain sesuai selera
+        const isHeadlineMode = (data === ALL_NEWS);
         
         if (isHeadlineMode && data.length > 0) {
             const main = data[0];
             const others = data.slice(1);
-
-            // 1. HEADLINE BESAR
             html += `
             <div onclick="openBerita(${main.id})" class="group cursor-pointer mb-10 relative w-full h-[300px] md:h-[500px] rounded-3xl overflow-hidden shadow-2xl">
                 <img src="${main.foto_url}=s2000" class="w-full h-full object-cover group-hover:scale-105 transition duration-1000">
@@ -365,19 +398,14 @@
                     </div>
                 </div>
             </div>`;
-
-            // 2. GRID SISANYA
             html += '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">';
             others.forEach(item => html += createCard(item));
             html += '</div>';
-
         } else {
-            // Layout Grid Biasa (Kalau hasil filter / search)
             html += '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">';
             data.forEach(item => html += createCard(item));
             html += '</div>';
         }
-
         c.innerHTML = html;
     }
 
@@ -407,8 +435,6 @@
         document.getElementById('viewPenulis').innerText = item.penulis;
         document.getElementById('viewTanggal').innerText = formatDate(item.created_at);
         document.getElementById('viewIsi').innerText = item.isi_berita;
-        
-        // Reset scroll modal ke atas
         document.getElementById('modalBerita').scrollTop = 0;
         toggleModal('modalBerita');
     }
@@ -417,6 +443,6 @@
         if(!iso) return '-'; 
         return new Date(iso).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}); 
     }
-  </script>
+</script>
 </body>
 </html>
