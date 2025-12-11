@@ -262,16 +262,42 @@
         }
     }
 
+    const EMOJI_MAP = [
+        { icon: '👍🏻', col: 'r_thumb' },
+        { icon: '❤️', col: 'r_love' },
+        { icon: '😂', col: 'r_laugh' },
+        { icon: '😱', col: 'r_shock' },
+        { icon: '🙏🏻', col: 'r_pray' },
+        { icon: '🔥', col: 'r_fire' }
+    ];
+
     function renderMenfessGrid(container, data) {
         let html = '';
         data.forEach((item, index) => {
             const rotation = (index % 2 === 0) ? '-rotate-1' : 'rotate-1';
             
-            // Cek apakah user pernah like pesan ini (Disimpan di LocalStorage HP user)
-            const isLiked = localStorage.getItem('like_' + item.id) ? 'scale-125 grayscale-0' : 'grayscale opacity-50';
+            // Generate HTML untuk 6 Emoji Buttons
+            let reactionHtml = '';
+            EMOJI_MAP.forEach(em => {
+                // Cek LocalStorage: Apakah user ini sudah klik emoji ini di surat ini?
+                const storageKey = `liked_${item.id}_${em.col}`;
+                const isClicked = localStorage.getItem(storageKey);
+                const activeClass = isClicked ? 'grayscale-0 scale-110 opacity-100' : 'grayscale opacity-60 hover:opacity-100 hover:scale-110';
+                
+                // Ambil jumlah like dari database, kalau null/0 jadi kosong stringnya biar rapi
+                const count = item[em.col] > 0 ? item[em.col] : ''; 
+
+                reactionHtml += `
+                <button onclick="sendReaction(this, ${item.id}, '${em.col}')" 
+                    class="flex flex-col items-center justify-center transition transform duration-200 ${activeClass}">
+                    <span class="text-lg">${em.icon}</span>
+                    <span class="text-[10px] font-bold text-slate-600 h-3 leading-none count-label">${count}</span>
+                </button>
+                `;
+            });
 
             html += `
-            <div class="menfess-card relative p-5 rounded-3xl ${item.warna_bg} shadow-sm border border-black/5 flex flex-col h-full min-h-[220px] ${rotation} transition duration-300">
+            <div class="menfess-card relative p-5 rounded-3xl ${item.warna_bg} shadow-sm border border-black/5 flex flex-col h-full min-h-[240px] ${rotation} transition duration-300">
                 <div class="flex justify-between items-start mb-3 border-b border-black/10 pb-2">
                     <span class="text-[10px] font-bold uppercase tracking-widest text-slate-900/50">To: ${item.untuk}</span>
                     <i class="bi bi-pin-angle-fill text-slate-900/20 text-xl"></i>
@@ -280,13 +306,13 @@
                 <p class="font-hand text-xl md:text-2xl leading-snug text-slate-800 flex-1 break-words mb-4">"${item.pesan}"</p>
                 
                 <div class="mt-auto">
-                    <div class="flex justify-between items-end">
+                    <div class="flex justify-between items-end mb-3">
                         <span class="text-xs font-bold text-slate-700">- ${item.pengirim}</span>
                         <span class="text-[10px] text-slate-500/80">${new Date(item.created_at).toLocaleDateString()}</span>
                     </div>
                     
-                    <div class="flex gap-3 mt-3 pt-2 border-t border-black/5 justify-end">
-                        <button onclick="react(this, ${item.id})" class="transition transform hover:scale-110 ${isLiked} text-lg">❤️</button>
+                    <div class="flex justify-between items-end pt-2 border-t border-black/5 bg-white/30 rounded-xl p-2 backdrop-blur-sm">
+                        ${reactionHtml}
                     </div>
                 </div>
             </div>`;
@@ -294,24 +320,36 @@
         container.innerHTML = html;
     }
 
-    // Fungsi Agar Emoji Bisa Diklik & Berubah
-    function react(btn, id) {
-        // Toggle visual
-        const isActive = btn.classList.contains('grayscale');
-        
-        if(isActive) {
-            // JADI LIKE
-            btn.classList.remove('grayscale', 'opacity-50');
-            btn.classList.add('scale-125', 'grayscale-0');
-            localStorage.setItem('like_' + id, 'true'); // Simpan di HP user
-        } else {
-            // UNLIKE
-            btn.classList.add('grayscale', 'opacity-50');
-            btn.classList.remove('scale-125', 'grayscale-0');
-            localStorage.removeItem('like_' + id);
+    // Fungsi Kirim Reaksi (Optimistic UI)
+    async function sendReaction(btn, id, type) {
+        // 1. Cek dulu di localStorage biar gak spam 1 orang klik 100x
+        const storageKey = `liked_${id}_${type}`;
+        if(localStorage.getItem(storageKey)) return; // Kalau sudah klik, stop (gak bisa unlike biar database simple)
+
+        // 2. Efek Visual Langsung (Biar terasa cepat di mata user)
+        btn.classList.remove('grayscale', 'opacity-60');
+        btn.classList.add('grayscale-0', 'scale-125', 'opacity-100');
+        setTimeout(() => btn.classList.remove('scale-125', 'scale-110'), 200); // Efek membal
+
+        // Tambah angka secara manual di layar
+        const label = btn.querySelector('.count-label');
+        let currentCount = parseInt(label.innerText) || 0;
+        label.innerText = currentCount + 1;
+
+        // 3. Simpan state di HP user
+        localStorage.setItem(storageKey, 'true');
+
+        // 4. Kirim ke Backend (Silent Background Process)
+        try {
+            await fetch(GAS_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: 'add_reaction', id: id, type: type }) 
+            });
+            // Tidak perlu alert sukses, biar user lanjut scrolling
+        } catch(e) {
+            console.error("Gagal kirim like");
         }
     }
-
     function openAllMenfess() {
         const c = document.getElementById('allMenfessContainer');
         // Render semua data yg sudah diload
