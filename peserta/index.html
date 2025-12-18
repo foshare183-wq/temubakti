@@ -299,58 +299,58 @@
             const { jsPDF } = window.jspdf;
             const elName = document.getElementById('cardName');
             const elUnit = document.getElementById('cardUnit');
-            
+
             const txtName = elName ? elName.innerText.toUpperCase() : "PESERTA";
             const txtUnit = elUnit ? elUnit.innerText : "-";
-            
+
+            // Setup Dokumen A4
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
-            const width = doc.internal.pageSize.getWidth();
+            const width = doc.internal.pageSize.getWidth(); // Lebar A4 (~210mm)
             const height = doc.internal.pageSize.getHeight();
-            
-            // 1. Background
+
+            // 1. Render Background
             doc.addImage(imgData, 'JPEG', 0, 0, width, height, undefined, 'FAST');
-            
-            // 2. Setting Font Nama
+
+            // 2. Setup Font Nama (Default)
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(CERT_CONFIG.NAME_SIZE);
+            let fontSize = CERT_CONFIG.NAME_SIZE; // Ambil ukuran default (24)
+            doc.setFontSize(fontSize);
             doc.setTextColor(CERT_CONFIG.NAME_COLOR);
+
+            // --- LOGIKA BARU: AUTO SHRINK (Kecilkan Otomatis) ---
             
-            // --- LOGIKA BARU: AUTO WRAP & POSISI ---
+            // Tentukan batas lebar maksimal teks agar tidak keluar margin
+            // A4 = 210mm. Kita sisakan margin kiri-kanan masing-masing 15mm (total 30mm).
+            // Jadi area aman = 180mm.
+            const maxTextWidth = 180; 
             
-            // Batas lebar teks (A4 lebar 210mm, kita beri margin aman jadi 170mm)
-            const maxNameWidth = 170; 
-            
-            // Pecah nama menjadi array baris jika melebihi batas lebar
-            const nameLines = doc.splitTextToSize(txtName, maxNameWidth);
-            
-            // Tentukan posisi Y
-            let finalNameY = CERT_CONFIG.NAME_Y;
-            
-            // Jika nama menjadi lebih dari 1 baris, naikkan posisi ke atas (kurangi Y)
-            if (nameLines.length > 1) {
-                // Naikkan 7mm ke atas agar baris kedua tidak menabrak tulisan unit
-                finalNameY = finalNameY - 7; 
+            // Hitung lebar teks nama saat ini
+            const textWidth = doc.getTextWidth(txtName);
+
+            // Jika lebar teks melebihi batas, hitung ulang ukuran font
+            if (textWidth > maxTextWidth) {
+                // Rumus: Font Baru = Font Lama * (Batas Lebar / Lebar Teks Asli)
+                fontSize = fontSize * (maxTextWidth / textWidth);
+                
+                // Terapkan ukuran font baru
+                doc.setFontSize(fontSize);
             }
+            // ----------------------------------------------------
 
-            // Render Nama (tengah)
-            doc.text(nameLines, width / 2, finalNameY, { align: "center" });
-            
-            // ----------------------------------------
+            // Render Nama (Tengah)
+            doc.text(txtName, width / 2, CERT_CONFIG.NAME_Y, { align: "center" });
 
-            // 3. Setting Font Unit
+            // 3. Render Unit
             doc.setFont("helvetica", "normal");
             doc.setFontSize(CERT_CONFIG.UNIT_SIZE);
             doc.setTextColor(CERT_CONFIG.UNIT_COLOR);
-            
-            // Render Unit
             doc.text(txtUnit, width / 2, CERT_CONFIG.UNIT_Y, { align: "center" });
-            
-            // 4. Save & Feedback
+
+            // 4. Save
             doc.save(`Piagam_${txtName}.pdf`);
             btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> BERHASIL!';
-            
             setTimeout(() => { resetButton(btn, oriText); }, 3000);
-            
+
         } catch (error) {
             console.error(error);
             alert("Gagal menyusun PDF: " + error.message);
