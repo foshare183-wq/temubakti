@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Twibbon Generator - Temu Bakti</title>
+    
+    <link rel="icon" type="image/png" href="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/logo%20temu%20bakti.png">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Mencegah scroll saat drag di mobile agar tidak goyang */
@@ -11,6 +14,24 @@
         /* Animasi halus untuk kontrol */
         .fade-in { animation: fadeIn 0.5s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* Custom Style untuk Slider */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+            margin-top: -6px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #e2e8f0;
+            border-radius: 2px;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans selection:bg-indigo-100 selection:text-indigo-700">
@@ -18,29 +39,29 @@
     <div class="min-h-screen flex flex-col items-center justify-center p-4 py-8">
         
         <div class="text-center mb-6 max-w-md w-full">
-            <img src="./logo.png" alt="Logo Temu Bakti" class="h-20 mx-auto mb-4 object-contain">
+            <img src="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/logo%20temu%20bakti.png" alt="Logo Temu Bakti" class="h-24 mx-auto mb-4 object-contain">
             
-            <h1 class="text-2xl font-bold tracking-tight text-indigo-900 mb-2">Campaign Temu Bakti</h1>
-            <p class="text-slate-500 text-sm">Sesuaikan posisimu, geser dan zoom foto agar pas di dalam bingkai Story.</p>
+            <h1 class="text-2xl font-bold tracking-tight text-indigo-900 mb-1">Temu Bakti 2 PMI Malut</h1>
+            <p class="text-slate-500 text-xs">Geser, Zoom, dan Putar foto agar pas dengan frame.</p>
         </div>
 
         <div class="bg-white p-5 rounded-2xl shadow-xl w-full max-w-md border border-slate-100">
             
-            <div class="relative w-full aspect-[9/16] bg-slate-100 rounded-xl overflow-hidden mb-6 border-2 border-dashed border-slate-300 flex items-center justify-center group hover:border-indigo-400 transition-colors">
+            <div class="relative w-full aspect-[9/16] bg-slate-100 rounded-xl overflow-hidden mb-6 border-2 border-dashed border-slate-300 flex items-center justify-center shadow-inner">
                 <canvas id="twibbonCanvas" class="w-full h-full cursor-move"></canvas>
                 
                 <div id="placeholderText" class="absolute pointer-events-none text-slate-400 text-sm flex flex-col items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    Upload foto vertikal/portrait
+                    Upload foto portrait
                 </div>
             </div>
 
-            <div class="space-y-4">
+            <div class="space-y-5">
                 <div>
-                    <label class="block w-full cursor-pointer bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium py-3 px-4 rounded-lg text-center transition-colors border border-indigo-200 flex items-center justify-center gap-2">
-                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <label class="block w-full cursor-pointer bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium py-3 px-4 rounded-lg text-center transition-colors border border-indigo-200 flex items-center justify-center gap-2 group">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:-translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
                         </svg>
                         <span id="uploadLabel">Pilih Foto</span>
@@ -49,49 +70,72 @@
                 </div>
 
                 <div id="controlsArea" class="hidden space-y-5 fade-in">
+                    
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                        <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Pengaturan</span>
+                        <button onclick="resetPosition()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Reset
+                        </button>
+                    </div>
+
                     <div>
-                        <div class="flex justify-between">
-                             <label class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1 block">Perbesar/Perkecil</label>
-                             <span class="text-xs text-indigo-600 cursor-pointer hover:underline" onclick="resetPosition()">Reset Posisi</span>
+                        <div class="flex justify-between mb-1">
+                            <label class="text-xs text-slate-600 font-medium">Zoom</label>
+                            <span class="text-xs text-slate-400" id="zoomValue">100%</span>
                         </div>
-                       
                         <input type="range" id="scaleRange" min="0.1" max="3.5" step="0.01" value="1" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
                     </div>
 
-                    <button id="downloadBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-lg shadow-lg shadow-indigo-200 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2">
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <label class="text-xs text-slate-600 font-medium">Putar</label>
+                            <span class="text-xs text-slate-400" id="rotateValue">0°</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-slate-400">-180°</span>
+                            <input type="range" id="rotateRange" min="-180" max="180" step="1" value="0" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                            <span class="text-xs text-slate-400">180°</span>
+                        </div>
+                    </div>
+
+                    <button id="downloadBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-lg shadow-lg shadow-indigo-200 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 mt-4">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        Simpan Gambar Story
+                        Simpan Gambar
                     </button>
                 </div>
             </div>
         </div>
 
         <footer class="mt-8 text-center text-xs text-slate-400">
-            <p>&copy; 2024 Panitia Temu Bakti.</p>
+            <p>&copy; 2026 Panitia Temu Bakti 2 PMI Malut.</p>
         </footer>
     </div>
 
     <script>
-        // --- KONFIGURASI PENTING ---
-        // Pastikan frame.png Anda berukuran 1080x1920
-        const FRAME_URL = './frame.png'; 
-        // Resolusi Output (Story 9:16)
+        // KONFIGURASI
+        const FRAME_URL = './frame.png'; // PASTIKAN FILE INI ADA DI GITHUB ANDA
         const CANVAS_WIDTH = 1080;
         const CANVAS_HEIGHT = 1920;
-        // ---------------------------
 
         const canvas = document.getElementById('twibbonCanvas');
         const ctx = canvas.getContext('2d');
+        
+        // Elements
         const imageInput = document.getElementById('imageInput');
         const scaleRange = document.getElementById('scaleRange');
+        const rotateRange = document.getElementById('rotateRange');
         const downloadBtn = document.getElementById('downloadBtn');
         const placeholderText = document.getElementById('placeholderText');
         const controlsArea = document.getElementById('controlsArea');
         const uploadLabel = document.getElementById('uploadLabel');
+        const zoomValueDisp = document.getElementById('zoomValue');
+        const rotateValueDisp = document.getElementById('rotateValue');
 
-        // Set resolusi internal canvas ke HD Story
         canvas.width = CANVAS_WIDTH;
         canvas.height = CANVAS_HEIGHT;
 
@@ -99,32 +143,34 @@
         let frameImage = new Image();
         let isImageLoaded = false;
         
-        // State Variables untuk Manipulasi Gambar
+        // State Variables
         let scale = 1;
+        let rotation = 0;
         let offsetX = 0;
         let offsetY = 0;
         let isDragging = false;
 
-        // 1. Load Frame Twibbon saat awal
-        frameImage.crossOrigin = "anonymous"; // Menghindari isu CORS jika dihosting berbeda
+        // Load Frame
+        frameImage.crossOrigin = "anonymous";
         frameImage.src = FRAME_URL;
-        frameImage.onload = () => {
-            drawCanvas(); // Gambar frame kosong saat siap
-        };
-        frameImage.onerror = () => {
-            alert("Gagal memuat frame.png. Pastikan file ada di folder yang sama.");
-        }
+        frameImage.onload = () => drawCanvas();
+        frameImage.onerror = () => alert("Gagal memuat frame.png. Pastikan file ada di folder yang sama.");
 
-        // Fungsi Reset Posisi
         function resetPosition() {
              scale = 1;
-             scaleRange.value = 1;
+             rotation = 0;
              offsetX = 0;
              offsetY = 0;
+             
+             // Update Slider UI
+             scaleRange.value = 1;
+             rotateRange.value = 0;
+             zoomValueDisp.innerText = "100%";
+             rotateValueDisp.innerText = "0°";
+             
              drawCanvas();
         }
 
-        // 2. Handle Upload Foto
         imageInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -136,7 +182,6 @@
                     isImageLoaded = true;
                     resetPosition();
                     
-                    // Update UI
                     placeholderText.style.display = 'none';
                     controlsArea.classList.remove('hidden');
                     uploadLabel.innerText = "Ganti Foto Lain";
@@ -146,21 +191,17 @@
             reader.readAsDataURL(file);
         });
 
-        // 3. Fungsi Menggambar Utama (Core Logic)
+        // CORE LOGIC DRAWING
         function drawCanvas() {
-            // Bersihkan canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (isImageLoaded) {
                 ctx.save();
-                // Pindahkan titik tengah ke pusat canvas
                 ctx.translate(canvas.width / 2, canvas.height / 2);
-                // Terapkan zoom
+                ctx.rotate(rotation * Math.PI / 180);
                 ctx.scale(scale, scale);
-                // Pindahkan kembali
                 ctx.translate(-canvas.width / 2, -canvas.height / 2);
 
-                // Hitung posisi gambar user agar ditengah relatif terhadap offset
                 const xPos = (canvas.width - userImage.width) / 2 + offsetX;
                 const yPos = (canvas.height - userImage.height) / 2 + offsetY;
                 
@@ -168,88 +209,72 @@
                 ctx.restore();
             }
 
-            // Gambar Frame Twibbon (Pastikan frame transparan di tengah)
-            // Digambar terakhir agar berada di layer paling atas
             ctx.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
         }
 
-        // 4. Handle Zoom Slider
+        // Handle Sliders
         scaleRange.addEventListener('input', function() {
-            // Menggunakan fungsi eksponensial kecil agar zoom terasa lebih natural
             scale = parseFloat(this.value);
+            zoomValueDisp.innerText = Math.round(scale * 100) + "%";
             drawCanvas();
         });
 
-        // 5. Handle Dragging (Mouse & Touch yang Lebih Presisi)
-        
-        // --- MOUSE EVENTS ---
+        rotateRange.addEventListener('input', function() {
+            rotation = parseInt(this.value);
+            rotateValueDisp.innerText = rotation + "°";
+            drawCanvas();
+        });
+
+        // Handle Dragging (Mouse & Touch)
         canvas.addEventListener('mousedown', () => isDragging = true);
         window.addEventListener('mouseup', () => isDragging = false);
         
         canvas.addEventListener('mousemove', (e) => {
             if (!isDragging || !isImageLoaded) return;
-            
-            // Hitung faktor skala antara ukuran layar dan ukuran asli canvas
             const rect = canvas.getBoundingClientRect();
             const scaleMultiplierX = canvas.width / rect.width;
             const scaleMultiplierY = canvas.height / rect.height;
-
-            // movementX/Y memberikan delta gerakan mouse
-            // Kita bagi dengan 'scale' saat ini agar kecepatan geser konsisten meskipun sedang di-zoom in
             offsetX += (e.movementX * scaleMultiplierX) / scale;
             offsetY += (e.movementY * scaleMultiplierY) / scale;
             drawCanvas();
         });
 
-        // --- TOUCH EVENTS (MOBILE) ---
-        let lastTouchX = 0;
-        let lastTouchY = 0;
-
+        let lastTouchX = 0; let lastTouchY = 0;
         canvas.addEventListener('touchstart', (e) => {
             if (!isImageLoaded) return;
             isDragging = true;
             lastTouchX = e.touches[0].clientX;
             lastTouchY = e.touches[0].clientY;
-            e.preventDefault(); // Mencegah scroll halaman saat menyentuh canvas
+            e.preventDefault(); 
         }, {passive: false});
 
         canvas.addEventListener('touchmove', (e) => {
             if (!isDragging) return;
             const touch = e.touches[0];
             const rect = canvas.getBoundingClientRect();
-            // Gunakan multiplier lebar karena biasanya height menyesuaikan aspect ratio
             const scaleMultiplier = canvas.width / rect.width; 
-
             const deltaX = touch.clientX - lastTouchX;
             const deltaY = touch.clientY - lastTouchY;
-
             offsetX += (deltaX * scaleMultiplier) / scale;
             offsetY += (deltaY * scaleMultiplier) / scale;
-
             lastTouchX = touch.clientX;
             lastTouchY = touch.clientY;
-            
             drawCanvas();
             e.preventDefault();
         }, {passive: false});
 
         window.addEventListener('touchend', () => isDragging = false);
 
-
-        // 6. Handle Download
+        // Download
         downloadBtn.addEventListener('click', function() {
-            // Membuat nama file dengan timestamp agar unik
             const date = new Date();
             const timestamp = date.getTime();
             const fileName = `twibbon-temu-bakti-${timestamp}.png`;
-
             const link = document.createElement('a');
             link.download = fileName;
-            // Kualitas 1.0 (maksimal)
             link.href = canvas.toDataURL('image/png', 1.0); 
             link.click();
         });
-
     </script>
 </body>
 </html>
