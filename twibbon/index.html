@@ -2,20 +2,19 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Twibbon Generator - Temu Bakti</title>
     
     <link rel="icon" type="image/png" href="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/logo%20temu%20bakti.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Mencegah scroll saat drag di mobile */
+        /* Mencegah zoom default browser & refresh tarik-turun */
+        body { overscroll-behavior: none; }
         canvas { touch-action: none; } 
-        /* Animasi halus */
         .fade-in { animation: fadeIn 0.5s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
-        /* Slider Styling */
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
             height: 16px;
@@ -40,37 +39,34 @@
 
         <div class="bg-white p-5 rounded-2xl shadow-xl w-full max-w-md border border-slate-100">
             
-            <div class="relative w-full aspect-[9/16] bg-slate-100 rounded-xl overflow-hidden mb-6 border-2 border-dashed border-slate-300 flex items-center justify-center shadow-inner">
-                <canvas id="twibbonCanvas" class="w-full h-full cursor-move"></canvas>
+            <div id="canvasContainer" class="relative w-full aspect-[9/16] bg-slate-100 rounded-xl overflow-hidden mb-6 border-2 border-dashed border-slate-300 flex items-center justify-center shadow-inner cursor-pointer hover:bg-slate-50 transition-colors group">
                 
-                <div id="placeholderText" class="absolute pointer-events-none text-slate-400 text-sm flex flex-col items-center text-center px-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <canvas id="twibbonCanvas" class="w-full h-full"></canvas>
+                
+                <div id="placeholderText" class="absolute flex flex-col items-center text-center px-4 group-hover:scale-105 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 text-indigo-400 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <span class="font-medium">Tap di sini</span>
-                    <span class="text-xs mt-1">untuk upload foto portrait</span>
+                    <span class="font-bold text-indigo-900 text-lg">Tap di sini</span>
+                    <span class="text-xs mt-1 text-slate-500">untuk memilih foto dari galeri</span>
                 </div>
             </div>
 
             <div class="space-y-5">
-                <div>
-                    <label class="block w-full cursor-pointer bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium py-3 px-4 rounded-lg text-center transition-colors border border-indigo-200 flex items-center justify-center gap-2 group">
-                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:-translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
-                        </svg>
-                        <span id="uploadLabel">Pilih Foto</span>
-                        <input type="file" id="imageInput" accept="image/*" class="hidden">
-                    </label>
-                </div>
+                <input type="file" id="imageInput" accept="image/*" class="hidden">
+                
+                <button id="changePhotoBtn" class="hidden w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium py-3 px-4 rounded-lg transition-colors border border-indigo-200 flex items-center justify-center gap-2">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+                    </svg>
+                    Ganti Foto Lain
+                </button>
 
                 <div id="controlsArea" class="hidden space-y-5 fade-in">
                     
                     <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-                        <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Atur Posisi</span>
+                        <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Atur Posisi (Manual)</span>
                         <button onclick="resetPosition()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
                             Reset
                         </button>
                     </div>
@@ -111,23 +107,22 @@
     </div>
 
     <script>
-        // --- KONFIGURASI ---
-        const FRAME_URL = './frame.png'; // Pastikan file frame.png ada di GitHub
+        const FRAME_URL = './frame.png'; 
         const CANVAS_WIDTH = 1080;
         const CANVAS_HEIGHT = 1920;
-        // -------------------
 
         const canvas = document.getElementById('twibbonCanvas');
         const ctx = canvas.getContext('2d');
         const imageInput = document.getElementById('imageInput');
+        const canvasContainer = document.getElementById('canvasContainer');
+        const placeholderText = document.getElementById('placeholderText');
+        const changePhotoBtn = document.getElementById('changePhotoBtn');
+        const controlsArea = document.getElementById('controlsArea');
         const scaleRange = document.getElementById('scaleRange');
         const rotateRange = document.getElementById('rotateRange');
-        const downloadBtn = document.getElementById('downloadBtn');
-        const placeholderText = document.getElementById('placeholderText');
-        const controlsArea = document.getElementById('controlsArea');
-        const uploadLabel = document.getElementById('uploadLabel');
         const zoomValueDisp = document.getElementById('zoomValue');
         const rotateValueDisp = document.getElementById('rotateValue');
+        const downloadBtn = document.getElementById('downloadBtn');
 
         canvas.width = CANVAS_WIDTH;
         canvas.height = CANVAS_HEIGHT;
@@ -135,22 +130,59 @@
         let userImage = new Image();
         let frameImage = new Image();
         let isImageLoaded = false;
+        
+        // Transform State
         let scale = 1;
         let rotation = 0;
         let offsetX = 0;
         let offsetY = 0;
+
+        // Gesture State
         let isDragging = false;
+        let isGesture = false; // Flag untuk multitouch
+        let lastX = 0, lastY = 0;
+        let startDistance = 0;
+        let startAngle = 0;
+        let initialScale = 1;
+        let initialRotation = 0;
 
         frameImage.crossOrigin = "anonymous";
         frameImage.src = FRAME_URL;
         frameImage.onload = () => drawCanvas();
-        frameImage.onerror = () => alert("Gagal memuat frame.png. Cek nama file di GitHub.");
+        frameImage.onerror = () => alert("Gagal memuat frame.png");
+
+        // --- Helper Functions untuk Gesture Matematika ---
+        function getDistance(touch1, touch2) {
+            const dx = touch1.clientX - touch2.clientX;
+            const dy = touch1.clientY - touch2.clientY;
+            return Math.hypot(dx, dy);
+        }
+
+        function getAngle(touch1, touch2) {
+            const dx = touch1.clientX - touch2.clientX;
+            const dy = touch1.clientY - touch2.clientY;
+            return Math.atan2(dy, dx) * 180 / Math.PI;
+        }
+
+        // --- Event Listeners ---
+
+        canvasContainer.addEventListener('click', () => {
+            if (!isImageLoaded) imageInput.click();
+        });
+
+        changePhotoBtn.addEventListener('click', () => imageInput.click());
+
+        function updateUI() {
+            scaleRange.value = scale;
+            rotateRange.value = rotation;
+            zoomValueDisp.innerText = Math.round(scale * 100) + "%";
+            rotateValueDisp.innerText = Math.round(rotation) + "°";
+            drawCanvas();
+        }
 
         function resetPosition() {
              scale = 1; rotation = 0; offsetX = 0; offsetY = 0;
-             scaleRange.value = 1; rotateRange.value = 0;
-             zoomValueDisp.innerText = "100%"; rotateValueDisp.innerText = "0°";
-             drawCanvas();
+             updateUI();
         }
 
         imageInput.addEventListener('change', function(e) {
@@ -164,7 +196,9 @@
                     resetPosition();
                     placeholderText.style.display = 'none';
                     controlsArea.classList.remove('hidden');
-                    uploadLabel.innerText = "Ganti Foto Lain";
+                    changePhotoBtn.classList.remove('hidden'); 
+                    changePhotoBtn.classList.add('flex');
+                    canvasContainer.style.cursor = 'move';
                 }
                 userImage.src = event.target.result;
             }
@@ -179,6 +213,7 @@
                 ctx.rotate(rotation * Math.PI / 180);
                 ctx.scale(scale, scale);
                 ctx.translate(-canvas.width / 2, -canvas.height / 2);
+                
                 const xPos = (canvas.width - userImage.width) / 2 + offsetX;
                 const yPos = (canvas.height - userImage.height) / 2 + offsetY;
                 ctx.drawImage(userImage, xPos, yPos);
@@ -187,52 +222,111 @@
             ctx.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
         }
 
+        // Slider Listeners
         scaleRange.addEventListener('input', function() {
             scale = parseFloat(this.value);
             zoomValueDisp.innerText = Math.round(scale * 100) + "%";
             drawCanvas();
         });
-
         rotateRange.addEventListener('input', function() {
             rotation = parseInt(this.value);
             rotateValueDisp.innerText = rotation + "°";
             drawCanvas();
         });
 
-        // Mouse Drag
-        canvas.addEventListener('mousedown', () => isDragging = true);
+        // --- MOUSE EVENTS (PC) ---
+        canvasContainer.addEventListener('mousedown', (e) => {
+            if(isImageLoaded) isDragging = true;
+        });
         window.addEventListener('mouseup', () => isDragging = false);
-        canvas.addEventListener('mousemove', (e) => {
+        window.addEventListener('mousemove', (e) => {
             if (!isDragging || !isImageLoaded) return;
+            e.preventDefault(); 
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
             offsetX += (e.movementX * scaleX) / scale;
-            offsetY += (e.movementY * (canvas.height / rect.height)) / scale;
+            offsetY += (e.movementY * scaleX) / scale;
             drawCanvas();
         });
 
-        // Touch Drag
-        let lastX = 0; let lastY = 0;
-        canvas.addEventListener('touchstart', (e) => {
+        // --- TOUCH EVENTS (MOBILE & MULTI-TOUCH) ---
+        
+        canvasContainer.addEventListener('touchstart', (e) => {
             if (!isImageLoaded) return;
-            isDragging = true;
-            lastX = e.touches[0].clientX;
-            lastY = e.touches[0].clientY;
-            e.preventDefault();
+
+            // Jika 2 jari = Gesture (Zoom/Rotate)
+            if (e.touches.length === 2) {
+                isGesture = true;
+                isDragging = false;
+                
+                startDistance = getDistance(e.touches[0], e.touches[1]);
+                startAngle = getAngle(e.touches[0], e.touches[1]);
+                
+                initialScale = scale;
+                initialRotation = rotation;
+            } 
+            // Jika 1 jari = Dragging
+            else if (e.touches.length === 1) {
+                isDragging = true;
+                lastX = e.touches[0].clientX;
+                lastY = e.touches[0].clientY;
+            }
+            
+            e.preventDefault(); 
         }, {passive: false});
 
-        canvas.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            const t = e.touches[0];
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            offsetX += ((t.clientX - lastX) * scaleX) / scale;
-            offsetY += ((t.clientY - lastY) * scaleX) / scale;
-            lastX = t.clientX; lastY = t.clientY;
-            drawCanvas();
+        canvasContainer.addEventListener('touchmove', (e) => {
+            if (!isImageLoaded) return;
             e.preventDefault();
+
+            // LOGIKA GESTURE (2 Jari)
+            if (e.touches.length === 2 && isGesture) {
+                // 1. Hitung Zoom
+                const currentDistance = getDistance(e.touches[0], e.touches[1]);
+                const scaleMultiplier = currentDistance / startDistance;
+                
+                // Batasi scale agar tidak terlalu ekstrem
+                let newScale = initialScale * scaleMultiplier;
+                if (newScale < 0.1) newScale = 0.1;
+                if (newScale > 3.5) newScale = 3.5;
+                scale = newScale;
+
+                // 2. Hitung Rotasi
+                const currentAngle = getAngle(e.touches[0], e.touches[1]);
+                // Selisih sudut
+                const angleDelta = currentAngle - startAngle; 
+                rotation = initialRotation + angleDelta;
+
+                // Update UI Sliders agar sinkron dengan jari
+                updateUI();
+            }
+            // LOGIKA DRAG (1 Jari)
+            else if (e.touches.length === 1 && isDragging) {
+                const t = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                
+                offsetX += ((t.clientX - lastX) * scaleX) / scale;
+                offsetY += ((t.clientY - lastY) * scaleX) / scale;
+                
+                lastX = t.clientX; lastY = t.clientY;
+                drawCanvas();
+            }
         }, {passive: false});
-        window.addEventListener('touchend', () => isDragging = false);
+        
+        window.addEventListener('touchend', (e) => {
+            isDragging = false;
+            // Jika jari diangkat dan sisa kurang dari 2, stop gesture
+            if (e.touches.length < 2) {
+                isGesture = false;
+            }
+            // Jika masih sisa 1 jari, update posisi terakhir agar tidak "lompat" saat drag lanjut
+            if (e.touches.length === 1) {
+                 isDragging = true;
+                 lastX = e.touches[0].clientX;
+                 lastY = e.touches[0].clientY;
+            }
+        });
 
         downloadBtn.addEventListener('click', function() {
             const link = document.createElement('a');
