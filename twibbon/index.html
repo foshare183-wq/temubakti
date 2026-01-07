@@ -9,13 +9,13 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Mencegah scroll saat drag di mobile agar tidak goyang */
+        /* Mencegah scroll saat drag di mobile */
         canvas { touch-action: none; } 
-        /* Animasi halus untuk kontrol */
+        /* Animasi halus */
         .fade-in { animation: fadeIn 0.5s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
-        /* Custom Style untuk Slider */
+        /* Slider Styling */
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
             height: 16px;
@@ -36,23 +36,19 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans selection:bg-indigo-100 selection:text-indigo-700">
 
-    <div class="min-h-screen flex flex-col items-center justify-center p-4 py-8">
-        
-        <div class="text-center mb-6 max-w-md w-full">
-            <img src="https://afbhvfhdjozvypeehgjo.supabase.co/storage/v1/object/public/TB%20PMI/logo%20temu%20bakti.png" alt="Logo Temu Bakti" class="h-24 mx-auto mb-4 object-contain">
-            
-        </div>
+    <div class="min-h-screen flex flex-col items-center justify-center p-4">
 
         <div class="bg-white p-5 rounded-2xl shadow-xl w-full max-w-md border border-slate-100">
             
             <div class="relative w-full aspect-[9/16] bg-slate-100 rounded-xl overflow-hidden mb-6 border-2 border-dashed border-slate-300 flex items-center justify-center shadow-inner">
                 <canvas id="twibbonCanvas" class="w-full h-full cursor-move"></canvas>
                 
-                <div id="placeholderText" class="absolute pointer-events-none text-slate-400 text-sm flex flex-col items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div id="placeholderText" class="absolute pointer-events-none text-slate-400 text-sm flex flex-col items-center text-center px-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    Upload foto portrait
+                    <span class="font-medium">Tap di sini</span>
+                    <span class="text-xs mt-1">untuk upload foto portrait</span>
                 </div>
             </div>
 
@@ -70,7 +66,7 @@
                 <div id="controlsArea" class="hidden space-y-5 fade-in">
                     
                     <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-                        <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Pengaturan</span>
+                        <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Atur Posisi</span>
                         <button onclick="resetPosition()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -109,21 +105,20 @@
             </div>
         </div>
 
-        <footer class="mt-8 text-center text-xs text-slate-400">
-            <p>&copy; 2026 Panitia Temu Bakti 2 PMI Malut.</p>
+        <footer class="mt-6 text-center text-xs text-slate-400">
+            <p>&copy; 2026 Panitia Temu Bakti PMI Malut.</p>
         </footer>
     </div>
 
     <script>
-        // KONFIGURASI
-        const FRAME_URL = './frame.png'; // PASTIKAN FILE INI ADA DI GITHUB ANDA
+        // --- KONFIGURASI ---
+        const FRAME_URL = './frame.png'; // Pastikan file frame.png ada di GitHub
         const CANVAS_WIDTH = 1080;
         const CANVAS_HEIGHT = 1920;
+        // -------------------
 
         const canvas = document.getElementById('twibbonCanvas');
         const ctx = canvas.getContext('2d');
-        
-        // Elements
         const imageInput = document.getElementById('imageInput');
         const scaleRange = document.getElementById('scaleRange');
         const rotateRange = document.getElementById('rotateRange');
@@ -140,46 +135,33 @@
         let userImage = new Image();
         let frameImage = new Image();
         let isImageLoaded = false;
-        
-        // State Variables
         let scale = 1;
         let rotation = 0;
         let offsetX = 0;
         let offsetY = 0;
         let isDragging = false;
 
-        // Load Frame
         frameImage.crossOrigin = "anonymous";
         frameImage.src = FRAME_URL;
         frameImage.onload = () => drawCanvas();
-        frameImage.onerror = () => alert("Gagal memuat frame.png. Pastikan file ada di folder yang sama.");
+        frameImage.onerror = () => alert("Gagal memuat frame.png. Cek nama file di GitHub.");
 
         function resetPosition() {
-             scale = 1;
-             rotation = 0;
-             offsetX = 0;
-             offsetY = 0;
-             
-             // Update Slider UI
-             scaleRange.value = 1;
-             rotateRange.value = 0;
-             zoomValueDisp.innerText = "100%";
-             rotateValueDisp.innerText = "0°";
-             
+             scale = 1; rotation = 0; offsetX = 0; offsetY = 0;
+             scaleRange.value = 1; rotateRange.value = 0;
+             zoomValueDisp.innerText = "100%"; rotateValueDisp.innerText = "0°";
              drawCanvas();
         }
 
         imageInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(event) {
                 userImage = new Image();
                 userImage.onload = function() {
                     isImageLoaded = true;
                     resetPosition();
-                    
                     placeholderText.style.display = 'none';
                     controlsArea.classList.remove('hidden');
                     uploadLabel.innerText = "Ganti Foto Lain";
@@ -189,28 +171,22 @@
             reader.readAsDataURL(file);
         });
 
-        // CORE LOGIC DRAWING
         function drawCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
             if (isImageLoaded) {
                 ctx.save();
                 ctx.translate(canvas.width / 2, canvas.height / 2);
                 ctx.rotate(rotation * Math.PI / 180);
                 ctx.scale(scale, scale);
                 ctx.translate(-canvas.width / 2, -canvas.height / 2);
-
                 const xPos = (canvas.width - userImage.width) / 2 + offsetX;
                 const yPos = (canvas.height - userImage.height) / 2 + offsetY;
-                
                 ctx.drawImage(userImage, xPos, yPos);
                 ctx.restore();
             }
-
             ctx.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
         }
 
-        // Handle Sliders
         scaleRange.addEventListener('input', function() {
             scale = parseFloat(this.value);
             zoomValueDisp.innerText = Math.round(scale * 100) + "%";
@@ -223,53 +199,44 @@
             drawCanvas();
         });
 
-        // Handle Dragging (Mouse & Touch)
+        // Mouse Drag
         canvas.addEventListener('mousedown', () => isDragging = true);
         window.addEventListener('mouseup', () => isDragging = false);
-        
         canvas.addEventListener('mousemove', (e) => {
             if (!isDragging || !isImageLoaded) return;
             const rect = canvas.getBoundingClientRect();
-            const scaleMultiplierX = canvas.width / rect.width;
-            const scaleMultiplierY = canvas.height / rect.height;
-            offsetX += (e.movementX * scaleMultiplierX) / scale;
-            offsetY += (e.movementY * scaleMultiplierY) / scale;
+            const scaleX = canvas.width / rect.width;
+            offsetX += (e.movementX * scaleX) / scale;
+            offsetY += (e.movementY * (canvas.height / rect.height)) / scale;
             drawCanvas();
         });
 
-        let lastTouchX = 0; let lastTouchY = 0;
+        // Touch Drag
+        let lastX = 0; let lastY = 0;
         canvas.addEventListener('touchstart', (e) => {
             if (!isImageLoaded) return;
             isDragging = true;
-            lastTouchX = e.touches[0].clientX;
-            lastTouchY = e.touches[0].clientY;
-            e.preventDefault(); 
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
+            e.preventDefault();
         }, {passive: false});
 
         canvas.addEventListener('touchmove', (e) => {
             if (!isDragging) return;
-            const touch = e.touches[0];
+            const t = e.touches[0];
             const rect = canvas.getBoundingClientRect();
-            const scaleMultiplier = canvas.width / rect.width; 
-            const deltaX = touch.clientX - lastTouchX;
-            const deltaY = touch.clientY - lastTouchY;
-            offsetX += (deltaX * scaleMultiplier) / scale;
-            offsetY += (deltaY * scaleMultiplier) / scale;
-            lastTouchX = touch.clientX;
-            lastTouchY = touch.clientY;
+            const scaleX = canvas.width / rect.width;
+            offsetX += ((t.clientX - lastX) * scaleX) / scale;
+            offsetY += ((t.clientY - lastY) * scaleX) / scale;
+            lastX = t.clientX; lastY = t.clientY;
             drawCanvas();
             e.preventDefault();
         }, {passive: false});
-
         window.addEventListener('touchend', () => isDragging = false);
 
-        // Download
         downloadBtn.addEventListener('click', function() {
-            const date = new Date();
-            const timestamp = date.getTime();
-            const fileName = `twibbon-temu-bakti-${timestamp}.png`;
             const link = document.createElement('a');
-            link.download = fileName;
+            link.download = `twibbon-temu-bakti-${Date.now()}.png`;
             link.href = canvas.toDataURL('image/png', 1.0); 
             link.click();
         });
