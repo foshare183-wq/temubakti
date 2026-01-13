@@ -1,6 +1,8 @@
 const CACHE_NAME = 'portal-pmi-v1';
 const urlsToCache = [
   '/',
+  './manifest.json',        // Cache file manifest
+  './peserta/index.html',    // <--- INI KUNCINYA (Sesuai lokasi file kamu)
   '/index.html',
   '/icon-192.png',
   '/icon-512.png'
