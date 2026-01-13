@@ -360,7 +360,63 @@
     function linkify(inputText) { if (!inputText) return ""; let replacePattern = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim; let replacedText = inputText.replace(replacePattern, '<a href="$1" target="_blank" class="text-blue-600 font-bold underline hover:text-blue-800 break-all">$1</a>'); return replacedText.replace(/\n/g, '<br>'); }
     function checkConfig(conf) { if(!conf) return; if(conf.cert_active) { document.getElementById('btnCertContainer').classList.remove('hidden'); } else { document.getElementById('btnCertContainer').classList.add('hidden'); } if(conf.info_active) { const lastVersion = localStorage.getItem('tb_info_ver'); if(lastVersion != conf.info_version) { document.getElementById('infoTitle').innerText = conf.info_title || "Info Terkini"; document.getElementById('infoMsg').innerHTML = linkify(conf.info_message || ""); document.getElementById('modalInfo').classList.remove('hidden'); localStorage.setItem('tb_info_ver', conf.info_version); } } }
     function closeInfo() { document.getElementById('modalInfo').classList.add('hidden'); }
-    function renderRundownData(data) { const c = document.getElementById('rundownList'); c.innerHTML = ''; if(!data || data.length === 0) { c.innerHTML = '<p class="text-center text-slate-400 text-sm">Belum ada jadwal.</p>'; return; } const groups = {}; data.forEach(j => { const k = j.hari_tanggal || "Lainnya"; if(!groups[k]) groups[k] = []; groups[k].push(j); }); Object.keys(groups).forEach(date => { let itemsHtml = ''; groups[date].forEach(j => { let badgeColor = 'bg-slate-100 text-slate-500'; if(j.unsur.includes('Wira')) badgeColor = 'bg-orange-100 text-orange-700'; else if(j.unsur.includes('Madya')) badgeColor = 'bg-purple-100 text-purple-700'; else if(j.unsur.includes('Pembina')) badgeColor = 'bg-blue-100 text-blue-700'; itemsHtml += `<div class="bg-white p-3 rounded-xl border border-slate-100 mb-2 flex gap-3 items-start"><div class="text-center min-w-[50px]"><div class="text-sm font-bold text-slate-800">${j.waktu}</div></div><div class="flex-1 border-l border-slate-100 pl-3"><h4 class="font-bold text-sm text-slate-800 leading-tight">${j.kegiatan}</h4><div class="flex gap-2 mt-2"><span class="text-[10px] px-2 py-0.5 rounded font-bold ${badgeColor}">${j.unsur}</span><span class="text-[10px] px-2 py-0.5 rounded bg-slate-50 text-slate-500 border border-slate-200"><i class="bi bi-geo-alt-fill"></i> ${j.lokasi}</span></div></div></div>`; }); c.innerHTML += `<div class="mb-4"><h4 class="font-bold text-red-600 mb-2 text-sm uppercase tracking-wider">${date}</h4>${itemsHtml}</div>`; }); }
+   // function renderRundownData(data) { const c = document.getElementById('rundownList'); c.innerHTML = ''; if(!data || data.length === 0) { c.innerHTML = '<p class="text-center text-slate-400 text-sm">Belum ada jadwal.</p>'; return; } const groups = {}; data.forEach(j => { const k = j.hari_tanggal || "Lainnya"; if(!groups[k]) groups[k] = []; groups[k].push(j); }); Object.keys(groups).forEach(date => { let itemsHtml = ''; groups[date].forEach(j => { let badgeColor = 'bg-slate-100 text-slate-500'; if(j.unsur.includes('Wira')) badgeColor = 'bg-orange-100 text-orange-700'; else if(j.unsur.includes('Madya')) badgeColor = 'bg-purple-100 text-purple-700'; else if(j.unsur.includes('Pembina')) badgeColor = 'bg-blue-100 text-blue-700'; itemsHtml += `<div class="bg-white p-3 rounded-xl border border-slate-100 mb-2 flex gap-3 items-start"><div class="text-center min-w-[50px]"><div class="text-sm font-bold text-slate-800">${j.waktu}</div></div><div class="flex-1 border-l border-slate-100 pl-3"><h4 class="font-bold text-sm text-slate-800 leading-tight">${j.kegiatan}</h4><div class="flex gap-2 mt-2"><span class="text-[10px] px-2 py-0.5 rounded font-bold ${badgeColor}">${j.unsur}</span><span class="text-[10px] px-2 py-0.5 rounded bg-slate-50 text-slate-500 border border-slate-200"><i class="bi bi-geo-alt-fill"></i> ${j.lokasi}</span></div></div></div>`; }); c.innerHTML += `<div class="mb-4"><h4 class="font-bold text-red-600 mb-2 text-sm uppercase tracking-wider">${date}</h4>${itemsHtml}</div>`; }); }
+    function renderRundownData(data) {
+    const c = document.getElementById('rundownList');
+    c.innerHTML = '';
+    
+    if (!data || data.length === 0) {
+        c.innerHTML = '<p class="text-center text-slate-400 text-sm">Belum ada jadwal.</p>';
+        return;
+    }
+
+    const groups = {};
+    
+    // 1. Grouping data berdasarkan tanggal
+    data.forEach(j => {
+        const k = j.hari_tanggal || "Lainnya";
+        if (!groups[k]) groups[k] = [];
+        groups[k].push(j);
+    });
+
+    // 2. Render Loop
+    Object.keys(groups).forEach(date => {
+        
+        // --- BAGIAN BARU: SORTING ---
+        // Kita urutkan item di dalam grup tanggal tersebut berdasarkan 'waktu'
+        groups[date].sort((a, b) => {
+            // Menggunakan localeCompare untuk membandingkan string jam (misal "08:00" vs "09:00")
+            // Pastikan format jam di database konsisten (misal: HH:mm)
+            return (a.waktu || '').localeCompare(b.waktu || '');
+        });
+        // -----------------------------
+
+        let itemsHtml = '';
+        groups[date].forEach(j => {
+            let badgeColor = 'bg-slate-100 text-slate-500';
+            // Logic pewarnaan badge
+            if (j.unsur.includes('Wira')) badgeColor = 'bg-orange-100 text-orange-700';
+            else if (j.unsur.includes('Madya')) badgeColor = 'bg-purple-100 text-purple-700';
+            else if (j.unsur.includes('Pembina')) badgeColor = 'bg-blue-100 text-blue-700';
+
+            itemsHtml += `
+            <div class="bg-white p-3 rounded-xl border border-slate-100 mb-2 flex gap-3 items-start">
+                <div class="text-center min-w-[50px]">
+                    <div class="text-sm font-bold text-slate-800">${j.waktu}</div>
+                </div>
+                <div class="flex-1 border-l border-slate-100 pl-3">
+                    <h4 class="font-bold text-sm text-slate-800 leading-tight">${j.kegiatan}</h4>
+                    <div class="flex gap-2 mt-2">
+                        <span class="text-[10px] px-2 py-0.5 rounded font-bold ${badgeColor}">${j.unsur}</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-slate-50 text-slate-500 border border-slate-200"><i class="bi bi-geo-alt-fill"></i> ${j.lokasi}</span>
+                    </div>
+                </div>
+            </div>`;
+        });
+
+        c.innerHTML += `<div class="mb-4"><h4 class="font-bold text-red-600 mb-2 text-sm uppercase tracking-wider">${date}</h4>${itemsHtml}</div>`;
+    });
+}
     function switchTab(tab) { document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active')); document.getElementById('nav-'+tab).classList.add('active'); ['home', 'jadwal'].forEach(t => document.getElementById('tab-'+t).classList.add('hidden')); document.getElementById('tab-'+tab).classList.remove('hidden'); }
     function formatTime(iso) { 
         if(!iso) return '-';
