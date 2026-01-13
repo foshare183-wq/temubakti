@@ -6,7 +6,7 @@ const urlsToCache = [
   '/icon-512.png'
 ];
 
-// Instal Service Worker
+// Instal Service Worke
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
