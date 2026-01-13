@@ -1,7 +1,7 @@
 {
   "name": "Temu Bakti",
   "short_name": "Temu Bakti",
-  "start_url": ".",
+  "start_url": "./peserta/index.html",
   "scope": ".",
   "display": "standalone",
   "orientation": "portrait",
