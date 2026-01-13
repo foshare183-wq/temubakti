@@ -17,7 +17,7 @@ self.addEventListener('install', event => {
   );
 });
 
-// Fetc Strategy (Network First, agar Iframe GAS selalu load terbaru)
+// Fetch Strategy (Network First, agar Iframe GAS selalu load terbaru)
 self.addEventListener('fetch', event => {
   event.respondWith(
     fetch(event.request).catch(() => {
