@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <title>Mading Digital PMI Malut</title>
+  <title>Mading Digital Temu Bakti PMI Malut</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <script src="https://cdn.tailwindcss.com"></script>
@@ -393,30 +393,63 @@
     // ==========================================
     // 3. LAIN-LAIN
     // ==========================================
-    async function submitMenfess(e) {
+  //  async function submitMenfess(e) {
+    //    e.preventDefault();
+      //  const btn = document.getElementById('btnKirimMenfess');
+        //const form = document.getElementById('formMenfess');
+       // btn.innerText = 'Mengirim...'; btn.disabled = true;
+
+        //try {
+          //  await fetch(GAS_URL, { 
+            //    method: 'POST', 
+              //  body: JSON.stringify({
+                //    action: 'upload_menfess',
+                  //  pengirim: form.pengirim.value,
+                    //untuk: form.untuk.value,
+                //    pesan: form.pesan.value,
+                  //  warna_bg: form.querySelector('input[name="warna"]:checked').value
+      //          }) 
+        //    });
+        //    alert('Pesanmu terkirim ke Redaksi!');
+       //     toggleModal('modalKirimMenfess');
+       //     form.reset();
+    //    } catch(err) { alert('Gagal mengirim.'); }
+      //  btn.innerText = 'Kirim Pesan!'; btn.disabled = false;
+ //   }
+
+  async function submitMenfess(e) {
         e.preventDefault();
         const btn = document.getElementById('btnKirimMenfess');
         const form = document.getElementById('formMenfess');
-        btn.innerText = 'Mengirim...'; btn.disabled = true;
+        
+        btn.innerText = 'Menempel...'; btn.disabled = true;
+
+        const data = {
+            action: 'upload_menfess',
+            pengirim: form.pengirim.value,
+            untuk: form.untuk.value,
+            pesan: form.pesan.value,
+            warna_bg: form.querySelector('input[name="warna"]:checked').value
+        };
 
         try {
-            await fetch(GAS_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({
-                    action: 'upload_menfess',
-                    pengirim: form.pengirim.value,
-                    untuk: form.untuk.value,
-                    pesan: form.pesan.value,
-                    warna_bg: form.querySelector('input[name="warna"]:checked').value
-                }) 
-            });
-            alert('Pesanmu terkirim ke Redaksi!');
+            // Write Operations tetap ke GAS
+            await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(data) });
+            
+            // 1. Tutup Modal
             toggleModal('modalKirimMenfess');
             form.reset();
+            
+            // 2. Tampilkan Pesan Sukses
+            alert('Pesanmu sudah tampil di mading!'); 
+
+            // 3. Refresh Otomatis agar pesan sendiri langsung terlihat
+            refreshMenfess(); 
+
         } catch(err) { alert('Gagal mengirim.'); }
+        
         btn.innerText = 'Kirim Pesan!'; btn.disabled = false;
     }
-
     function openAllMenfess() {
         const c = document.getElementById('allMenfessContainer');
         renderMenfessGrid(c, ALL_MENFESS);
