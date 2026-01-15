@@ -136,8 +136,14 @@
 
   <div id="modalBerita" class="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-sm hidden overflow-y-auto animate-fade-in">
       <div class="min-h-screen flex items-center justify-center p-4 py-10">
-          <div class="bg-white w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl relative">
-              <button onclick="closeModal('modalBerita')" class="absolute top-4 right-4 z-20 w-10 h-10 bg-black/50 hover:bg-red-600 rounded-full text-white flex items-center justify-center transition backdrop-blur-md"><i class="bi bi-x-lg"></i></button>
+          <div class="absolute top-4 right-4 z-20 flex gap-2">
+    <button onclick="shareCurrentNews()" class="w-10 h-10 bg-black/50 hover:bg-green-600 rounded-full text-white flex items-center justify-center transition backdrop-blur-md shadow-lg" title="Bagikan Berita">
+        <i class="bi bi-share-fill"></i>
+    </button>
+    <button onclick="closeModal('modalBerita')" class="w-10 h-10 bg-black/50 hover:bg-red-600 rounded-full text-white flex items-center justify-center transition backdrop-blur-md shadow-lg">
+        <i class="bi bi-x-lg"></i>
+    </button>
+
               
               <div class="h-64 md:h-[500px] w-full bg-slate-200 relative">
                   <img id="viewFoto" class="w-full h-full object-cover">
@@ -155,6 +161,11 @@
                       <span id="viewTanggal">Tanggal</span>
                   </div>
                   <div id="viewIsi" class="prose prose-lg prose-slate max-w-none text-slate-700 whitespace-pre-wrap leading-relaxed"></div>
+                <div class="mt-8 pt-6 border-t border-slate-100">
+    <button onclick="shareCurrentNews()" class="w-full py-3 bg-green-50 text-green-700 font-bold rounded-xl hover:bg-green-100 transition flex items-center justify-center gap-2">
+        <i class="bi bi-whatsapp"></i> Bagikan
+    </button>
+</div>
               </div>
           </div>
       </div>
@@ -214,6 +225,7 @@
     };
 
     let ALL_NEWS = [];
+  let CURRENT_OPEN_ID = null;
     let ALL_MENFESS = [];
     let IS_LOADING_MENFESS = false;
 
@@ -237,11 +249,15 @@
         try {
             const res = await fetch(`${SB_URL}/rest/v1/berita_pmi?status=eq.PUBLISHED&select=*&order=created_at.desc`, { headers: SB_HEADERS });
             const data = await res.json();
-            if(data.length > 0) { ALL_NEWS = data; filterNews('SEMUA'); }
+            if(data.length > 0) { 
+                ALL_NEWS = data; 
+                filterNews('SEMUA'); 
+                
+                checkDeepLink(); // <--- TAMBAHKAN PEMANGGILAN INI DISINI
+            }
             else { c.innerHTML = `<div class="text-center py-20 text-slate-400">Belum ada berita.</div>`; }
         } catch(e) { console.error(e); }
     }
-
     async function refreshMenfess() {
         if(IS_LOADING_MENFESS) return;
         const btnIcon = document.getElementById('iconRefresh');
@@ -490,22 +506,89 @@
     }
 
     function openBerita(id) {
-        const item = ALL_NEWS.find(i => i.id === id);
-        if(!item) return;
-        document.getElementById('viewFoto').src = item.foto_url;
-        document.getElementById('viewKategori').innerText = item.kategori;
-        document.getElementById('viewJudul').innerText = item.judul;
-        document.getElementById('viewPenulis').innerText = item.penulis;
-        document.getElementById('viewTanggal').innerText = formatDate(item.created_at);
-        document.getElementById('viewIsi').innerText = item.isi_berita;
-        document.getElementById('modalBerita').scrollTop = 0;
-        toggleModal('modalBerita');
+    const item = ALL_NEWS.find(i => i.id === id);
+    if(!item) return;
+
+    CURRENT_OPEN_ID = id; // <--- SIMPAN ID DISINI
+
+    // ... (kode pengisian viewFoto, viewJudul, dll TETAP SAMA seperti sebelumnya) ...
+    document.getElementById('viewFoto').src = item.foto_url;
+    document.getElementById('viewKategori').innerText = item.kategori;
+    document.getElementById('viewJudul').innerText = item.judul;
+    document.getElementById('viewPenulis').innerText = item.penulis;
+    document.getElementById('viewTanggal').innerText = formatDate(item.created_at);
+    document.getElementById('viewIsi').innerText = item.isi_berita;
+
+    document.getElementById('modalBerita').scrollTop = 0;
+    toggleModal('modalBerita');
+    
+    // Ubah URL browser tanpa reload (Biar kalau di-refresh tetap di berita ini)
+    const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?news_id=' + id;
+    window.history.pushState({ path: newUrl }, '', newUrl);
+}
+
+// Update fungsi close modal juga untuk membersihkan URL
+function closeModal(id) { 
+    document.getElementById(id).classList.add('hidden'); 
+    
+    if(id === 'modalBerita') {
+        // Kembalikan URL bersih saat modal ditutup
+        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.pushState({ path: cleanUrl }, '', cleanUrl);
+        CURRENT_OPEN_ID = null;
     }
+}
 
     function formatDate(iso) { 
         if(!iso) return '-'; 
         return new Date(iso).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}); 
     }
+
+  // --- FITUR SHARE & DEEP LINK ---
+
+// 1. Fungsi Share (Dipanggil Tombol)
+async function shareCurrentNews() {
+    if(!CURRENT_OPEN_ID) return;
+    
+    const item = ALL_NEWS.find(i => i.id === CURRENT_OPEN_ID);
+    
+    // Membuat Link Unik
+    const shareUrl = window.location.href; // URL saat ini sudah ada ?news_id=... berkat update di openBerita
+    const shareData = {
+        title: `Mading PMI: ${item.judul}`,
+        text: `Baca berita "${item.judul}" di Mading Digital Temu Bakti PMI!`,
+        url: shareUrl
+    };
+
+    // Cek apakah Browser mendukung Native Share (HP Android/iOS biasanya support)
+    if (navigator.share) {
+        try {
+            await navigator.share(shareData);
+        } catch (err) { console.log('Batal share'); }
+    } else {
+        // Fallback untuk Laptop/PC (Copy to Clipboard)
+        navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
+        alert('Link berita berhasil disalin! Silakan paste di WhatsApp.');
+    }
+}
+
+// 2. Fungsi Auto-Open (Cek Link saat Website Dimuat)
+// Panggil fungsi ini SETELAH loadNewsDirect selesai
+function checkDeepLink() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const newsId = urlParams.get('news_id');
+    
+    if(newsId) {
+        // Cari beritanya, tapi tunggu sebentar sampai data ALL_NEWS terisi
+        const checkExist = setInterval(() => {
+            if(ALL_NEWS.length > 0) {
+                clearInterval(checkExist);
+                // Buka modalnya
+                openBerita(parseInt(newsId));
+            }
+        }, 500); // Cek setiap setengah detik
+    }
+}
 </script>
 </body>
 </html>
