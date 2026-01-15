@@ -134,42 +134,61 @@
   </footer>
 
 
-  <div id="modalBerita" class="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-sm hidden overflow-y-auto animate-fade-in">
-      <div class="min-h-screen flex items-center justify-center p-4 py-10">
-          <div class="absolute top-4 right-4 z-20 flex gap-2">
-    <button onclick="shareCurrentNews()" class="w-10 h-10 bg-black/50 hover:bg-green-600 rounded-full text-white flex items-center justify-center transition backdrop-blur-md shadow-lg" title="Bagikan Berita">
-        <i class="bi bi-share-fill"></i>
-    </button>
-    <button onclick="closeModal('modalBerita')" class="w-10 h-10 bg-black/50 hover:bg-red-600 rounded-full text-white flex items-center justify-center transition backdrop-blur-md shadow-lg">
-        <i class="bi bi-x-lg"></i>
-    </button>
+ <div id="modalBerita" class="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-sm hidden overflow-y-auto animate-fade-in">
+    <div class="min-h-screen flex items-center justify-center p-4 py-8">
+        
+        <div class="bg-white w-full max-w-3xl rounded-3xl overflow-hidden shadow-2xl relative flex flex-col">
+            
+            <div class="absolute top-4 right-4 z-20 flex gap-2">
+                <button onclick="shareCurrentNews()" class="w-10 h-10 bg-white/90 hover:bg-green-100 text-slate-700 hover:text-green-700 rounded-full flex items-center justify-center transition shadow-lg backdrop-blur" title="Bagikan">
+                    <i class="bi bi-share-fill"></i>
+                </button>
+                <button onclick="closeModal('modalBerita')" class="w-10 h-10 bg-white/90 hover:bg-red-100 text-slate-700 hover:text-red-600 rounded-full flex items-center justify-center transition shadow-lg backdrop-blur" title="Tutup">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
 
-              
-              <div class="h-64 md:h-[500px] w-full bg-slate-200 relative">
-                  <img id="viewFoto" class="w-full h-full object-cover">
-                  <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                  <div class="absolute bottom-0 left-0 p-6 md:p-10 w-full">
-                      <span id="viewKategori" class="text-[10px] font-bold text-white bg-red-600 px-3 py-1 rounded-full uppercase tracking-wider mb-3 inline-block">BERITA</span>
-                      <h1 id="viewJudul" class="text-2xl md:text-4xl font-extrabold text-white leading-tight">Judul Berita</h1>
-                  </div>
-              </div>
-              
-              <div class="p-6 md:p-12 relative">
-                  <div class="flex items-center gap-4 text-sm text-slate-500 mb-8 border-b border-slate-100 pb-6">
-                      <span class="flex items-center gap-1 font-bold text-slate-900"><i class="bi bi-person-circle"></i> <span id="viewPenulis">Penulis</span></span>
-                      <span>&bull;</span>
-                      <span id="viewTanggal">Tanggal</span>
-                  </div>
-                  <div id="viewIsi" class="prose prose-lg prose-slate max-w-none text-slate-700 whitespace-pre-wrap leading-relaxed"></div>
-                <div class="mt-8 pt-6 border-t border-slate-100">
-    <button onclick="shareCurrentNews()" class="w-full py-3 bg-green-50 text-green-700 font-bold rounded-xl hover:bg-green-100 transition flex items-center justify-center gap-2">
-        <i class="bi bi-whatsapp"></i> Bagikan
-    </button>
+            <div class="w-full h-64 md:h-[400px] bg-slate-100 relative group">
+                <img id="viewFoto" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition duration-500"></div>
+            </div>
+
+            <div class="p-6 md:p-10 bg-white relative">
+                
+                <div class="flex items-center justify-between mb-4">
+                    <span id="viewKategori" class="text-[10px] font-bold text-white bg-red-600 px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">BERITA</span>
+                    <span id="viewTanggal" class="text-xs font-bold text-slate-400 flex items-center gap-1">
+                        <i class="bi bi-calendar-event"></i> <span>-</span>
+                    </span>
+                </div>
+
+                <h1 id="viewJudul" class="text-2xl md:text-4xl font-extrabold text-slate-900 leading-tight mb-6 font-sans">
+                    Judul Berita Disini
+                </h1>
+
+                <div class="flex items-center gap-3 border-y border-slate-100 py-4 mb-8">
+                    <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-xl border border-slate-200">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Jurnalis / Penulis</p>
+                        <p id="viewPenulis" class="text-sm font-bold text-slate-800">Nama Penulis</p>
+                    </div>
+                </div>
+
+                <div id="viewIsi" class="prose prose-lg prose-slate max-w-none text-slate-700 leading-relaxed whitespace-pre-wrap font-serif">
+                    </div>
+
+                <div class="mt-10 pt-6 border-t border-slate-100">
+                    <button onclick="shareCurrentNews()" class="w-full py-4 bg-slate-50 text-slate-700 font-bold rounded-xl hover:bg-slate-100 transition flex items-center justify-center gap-2 border border-slate-200">
+                        <i class="bi bi-whatsapp text-green-600 text-xl"></i> Bagikan Berita Ini
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
 </div>
-              </div>
-          </div>
-      </div>
-  </div>
 
   <div id="modalKirimMenfess" class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl transform scale-100 transition-all">
