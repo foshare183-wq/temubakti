@@ -615,6 +615,39 @@ function checkDeepLink() {
         }, 500); // Cek setiap setengah detik
     }
 }
+
+  // --- FITUR COPY LINK ---
+async function copyLink(btnElement) {
+    if(!CURRENT_OPEN_ID) return;
+
+    // 1. Ambil URL browser saat ini (karena openBerita sudah update URL)
+    const urlToCopy = window.location.href;
+
+    try {
+        // 2. Salin ke Clipboard
+        await navigator.clipboard.writeText(urlToCopy);
+
+        // 3. Efek Visual: Ubah Ikon jadi Centang (✓)
+        const icon = btnElement.querySelector('i');
+        
+        // Simpan class lama
+        const oldClass = icon.className;
+        
+        // Ganti jadi icon centang hijau
+        icon.className = 'bi bi-check-lg text-green-600 text-xl font-bold';
+        btnElement.classList.add('bg-green-50');
+
+        // 4. Kembalikan seperti semula setelah 2 detik
+        setTimeout(() => {
+            icon.className = oldClass;
+            btnElement.classList.remove('bg-green-50');
+        }, 2000);
+
+    } catch (err) {
+        console.error('Gagal copy', err);
+        alert('Gagal menyalin link. Pastikan browser mengizinkan akses clipboard.');
+    }
+}
 </script>
 </body>
 </html>
