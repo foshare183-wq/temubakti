@@ -139,14 +139,21 @@
         
         <div class="bg-white w-full max-w-3xl rounded-3xl overflow-hidden shadow-2xl relative flex flex-col">
             
-            <div class="absolute top-4 right-4 z-20 flex gap-2">
-                <button onclick="shareCurrentNews()" class="w-10 h-10 bg-white/90 hover:bg-green-100 text-slate-700 hover:text-green-700 rounded-full flex items-center justify-center transition shadow-lg backdrop-blur" title="Bagikan">
-                    <i class="bi bi-share-fill"></i>
-                </button>
-                <button onclick="closeModal('modalBerita')" class="w-10 h-10 bg-white/90 hover:bg-red-100 text-slate-700 hover:text-red-600 rounded-full flex items-center justify-center transition shadow-lg backdrop-blur" title="Tutup">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
+           <div class="absolute top-4 right-4 z-20 flex gap-2">
+    
+    <button onclick="copyLink(this)" class="w-10 h-10 bg-white/90 hover:bg-blue-100 text-slate-700 hover:text-blue-600 rounded-full flex items-center justify-center transition shadow-lg backdrop-blur group" title="Salin Link Berita">
+        <i class="bi bi-link-45deg text-xl group-hover:scale-110 transition"></i>
+    </button>
+
+    <button onclick="shareCurrentNews()" class="w-10 h-10 bg-white/90 hover:bg-green-100 text-slate-700 hover:text-green-700 rounded-full flex items-center justify-center transition shadow-lg backdrop-blur" title="Bagikan ke Apps Lain">
+        <i class="bi bi-share-fill text-sm"></i>
+    </button>
+    
+    <button onclick="closeModal('modalBerita')" class="w-10 h-10 bg-white/90 hover:bg-red-100 text-slate-700 hover:text-red-600 rounded-full flex items-center justify-center transition shadow-lg backdrop-blur" title="Tutup">
+        <i class="bi bi-x-lg text-lg"></i>
+    </button>
+
+</div>
 
             <div class="w-full h-64 md:h-[400px] bg-slate-100 relative group">
                 <img id="viewFoto" class="w-full h-full object-cover">
